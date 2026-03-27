@@ -6,14 +6,14 @@
     <meta name="theme-color" content="#007aff" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <link rel="manifest" href="public/manifest.webmanifest" />
+    <link rel="manifest" href="manifest.webmanifest" />
     <title>FitoPro</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div id="preloading-screen" class="preloading-screen" aria-hidden="false">
       <div class="preloading-card">
-        <img src="assets/logo-fetiche.svg" alt="Logo FitoPro" class="logo-mark logo-spin" />
+        <img src="../assets/logo-fetiche.svg" alt="Logo FitoPro" class="logo-mark logo-spin" />
         <h2>FitoPro se prépare…</h2>
         <div class="loading-bar"><span></span></div>
       </div>
@@ -24,7 +24,7 @@
         <div class="orbs">
           <span></span><span></span><span></span>
         </div>
-        <img src="assets/logo-fetiche.svg" alt="Mascotte FitoPro" class="logo-mark" />
+        <img src="../assets/logo-fetiche.svg" alt="Mascotte FitoPro" class="logo-mark" />
         <h1>Bienvenue sur FitoPro</h1>
         <p>Prêt à transformer ton entraînement ?</p>
         <button id="enter-app-btn">Commencer maintenant</button>
@@ -217,11 +217,11 @@
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <canvas id="hr-live-chart" width="900" height="220"></canvas>
 
-    <script src="src/state.js"></script>
-    <script src="src/timer.js"></script>
-    <script src="src/watch.js"></script>
-    <script src="src/ui.js"></script>
-    <script src="logic.js"></script>
-    <script src="app.js"></script>
+<script src="logic.js"></script>
+<script src="../src/state.js"></script>
+<script src="../src/ui.js"></script>
+<script src="../src/timer.js"></script>
+<script src="../src/watch.js"></script>
+<script src="app.js"></script>
   </body>
 </html>

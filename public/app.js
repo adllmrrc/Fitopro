@@ -951,7 +951,7 @@ enterAppBtn.addEventListener('click', closeWelcomeScreen);
 setPhase('attente');
 setControlState({ start: false, pause: true, resume: true, next: true });
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./public/sw.js').catch(() => {});
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
 hydrate();
 initOnboarding();

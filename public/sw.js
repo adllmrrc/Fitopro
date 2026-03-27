@@ -5,8 +5,8 @@ const ASSETS = [
   './styles.css',
   './app.js',
   './logic.js',
-  './assets/logo-fetiche.svg',
-  './public/offline.html'
+  '../assets/logo-fetiche.svg',
+  './offline.html'
 ];
 
 self.addEventListener('install', (event) => {
@@ -26,7 +26,7 @@ self.addEventListener('fetch', (event) => {
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
       return fetch(event.request).catch(() => {
-        if (event.request.mode === 'navigate') return caches.match('./public/offline.html');
+        if (event.request.mode === 'navigate') return caches.match('./offline.html');
         return new Response('', { status: 503 });
       });
     })

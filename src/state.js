@@ -30,13 +30,26 @@
     return migrated;
   }
 
+  function safeParseItem(key, fallback) {
+    try {
+      const rawValue = localStorage.getItem(key);
+      if (rawValue === null || rawValue === undefined) {
+        return JSON.parse(fallback);
+      }
+      return JSON.parse(rawValue);
+    } catch {
+      // corrupted localStorage value: fallback to default and reset later
+      return JSON.parse(fallback);
+    }
+  }
+
   function load() {
-    const meta = JSON.parse(localStorage.getItem('fitopro.meta') || '{"schema":1}');
+    const meta = safeParseItem('fitopro.meta', '{"schema":1}');
     const raw = {
-      workouts: JSON.parse(localStorage.getItem('fitopro.workouts') || '[]'),
-      stats: JSON.parse(localStorage.getItem('fitopro.stats') || '{}'),
-      history: JSON.parse(localStorage.getItem('fitopro.history') || '[]'),
-      settings: JSON.parse(localStorage.getItem('fitopro.settings') || '{}'),
+      workouts: safeParseItem('fitopro.workouts', '[]'),
+      stats: safeParseItem('fitopro.stats', '{}'),
+      history: safeParseItem('fitopro.history', '[]'),
+      settings: safeParseItem('fitopro.settings', '{}'),
     };
 
     const result = migrate(raw);

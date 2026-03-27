@@ -7,7 +7,7 @@
   "theme_color": "#007aff",
   "icons": [
     {
-      "src": "assets/logo-fetiche.svg",
+      "src": "../assets/logo-fetiche.svg",
       "sizes": "256x256",
       "type": "image/svg+xml"
     }
