@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#007aff" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="public/manifest.webmanifest" />
+    <title>FitoPro</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="preloading-screen" class="preloading-screen" aria-hidden="false">
+      <div class="preloading-card">
+        <img src="assets/logo-fetiche.svg" alt="Logo FitoPro" class="logo-mark logo-spin" />
+        <h2>FitoPro se prépare…</h2>
+        <div class="loading-bar"><span></span></div>
+      </div>
+    </div>
+
+    <div id="welcome-screen" class="welcome-screen hidden-until-load" aria-hidden="true">
+      <div class="welcome-card">
+        <div class="orbs">
+          <span></span><span></span><span></span>
+        </div>
+        <img src="assets/logo-fetiche.svg" alt="Mascotte FitoPro" class="logo-mark" />
+        <h1>Bienvenue sur FitoPro</h1>
+        <p>Prêt à transformer ton entraînement ?</p>
+        <button id="enter-app-btn">Commencer maintenant</button>
+      </div>
+    </div>
+
+    <div id="onboarding" class="modal" aria-hidden="true">
+      <div class="modal-content">
+        <h2>Bienvenue sur FitoPro 👋</h2>
+        <p>Créez votre programme, lancez vos séances, suivez vos progrès et restez motivé chaque semaine.</p>
+        <ul>
+          <li>Ajoutez des exercices personnalisés.</li>
+          <li>Utilisez les templates pour démarrer vite.</li>
+          <li>Suivez votre objectif hebdomadaire.</li>
+        </ul>
+        <label>
+          <input id="consent-check" type="checkbox" />
+          J’accepte la politique de confidentialité.
+        </label>
+        <p><a href="privacy.html" target="_blank" rel="noopener">Voir la politique de confidentialité</a></p>
+        <button id="close-onboarding">Commencer</button>
+      </div>
+    </div>
+
+    <div id="focus-mode" class="focus-mode hidden-until-load" aria-hidden="true">
+      <div class="focus-inner">
+        <p id="focus-phase" class="focus-phase">EXERCICE</p>
+        <h1 id="focus-timer" class="focus-timer">00:00</h1>
+        <p id="focus-task" class="focus-task">Prêt</p>
+        <p id="focus-heart-rate" class="focus-heart-rate">❤️ -- bpm</p>
+        <div class="focus-actions">
+          <button id="focus-pause-btn">Pause</button>
+          <button id="focus-next-btn">Valider</button>
+          <button id="focus-exit-btn" class="danger">Quitter focus</button>
+        </div>
+      </div>
+    </div>
+
+    <header class="hero">
+      <h1>FitoPro</h1>
+      <p>Votre coach sportif intelligent, partout avec vous.</p>
+    </header>
+
+    <main class="grid">
+      <section class="card">
+        <h2>Créer une séance</h2>
+        <form id="workout-form" novalidate>
+          <label>
+            Exercice
+            <input id="exercise" required minlength="2" maxlength="40" placeholder="Pompes" />
+          </label>
+          <label>
+            Répétitions
+            <input id="reps" type="number" min="1" max="200" value="10" required />
+          </label>
+          <label>
+            Séries
+            <input id="sets" type="number" min="1" max="20" value="3" required />
+          </label>
+          <label>
+            Durée exercice (secondes)
+            <input id="duration" type="number" min="10" max="600" value="45" required />
+          </label>
+          <label>
+            Repos entre séries (secondes)
+            <input id="rest" type="number" min="5" max="300" value="30" required />
+          </label>
+          <p id="form-error" class="error" role="alert" aria-live="polite"></p>
+          <button type="submit">Ajouter au programme</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Templates rapides</h2>
+        <p>Chargez un plan prêt à l'emploi.</p>
+        <div class="template-actions">
+          <button id="template-beginner">Débutant</button>
+          <button id="template-strength">Force</button>
+          <button id="template-loss">Perte de poids</button>
+          <button id="template-tabata">Tabata</button>
+          <button id="template-emom">EMOM</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Programme du jour</h2>
+        <ul id="workout-list" class="list"></ul>
+      </section>
+
+      <section class="card">
+        <h2>Suivi en temps réel</h2>
+        <p id="current-task" aria-live="polite">Aucune séance démarrée.</p>
+        <p id="phase-badge" class="badge">Phase: attente</p>
+        <div class="timer" id="timer">00:00</div>
+        <div class="controls">
+          <button id="start-btn">Démarrer</button>
+          <button id="pause-btn" disabled>Pause</button>
+          <button id="resume-btn" disabled>Reprendre</button>
+          <button id="next-btn" disabled>Valider</button>
+          <button id="reset-btn">Réinitialiser</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Statistiques</h2>
+        <p>Total séances terminées: <strong id="completed-workouts">0</strong></p>
+        <p>Total séries validées: <strong id="completed-sets">0</strong></p>
+        <p>Streak (jours actifs): <strong id="streak">0</strong></p>
+        <label>
+          Objectif hebdo (séances)
+          <input id="weekly-goal" type="number" min="1" max="14" value="4" />
+        </label>
+        <p id="goal-progress">0 / 4 séances cette semaine</p>
+        <h3>Badges</h3>
+        <p id="badges">Aucun badge débloqué pour l'instant.</p>
+        <h3>Suggestion d'amélioration</h3>
+        <p id="suggestion">Ajoutez au moins 1 exercice pour obtenir des suggestions.</p>
+        <div class="data-actions">
+          <button id="export-btn">Exporter JSON</button>
+          <label class="import-label">
+            Importer JSON
+            <input id="import-input" type="file" accept="application/json" />
+          </label>
+          <button id="clear-data-btn" class="danger">Vider les données</button>
+        </div>
+        <h3>Apple Watch (import)</h3>
+        <p id="watch-status">Importez un CSV d'entraînements exporté depuis Apple Santé/forme.</p>
+        <label class="import-label">
+          Importer données Apple Watch
+          <input id="watch-import-input" type="file" accept=".csv,text/csv" />
+        </label>
+        <h3>Apple Watch Live (bridge)</h3>
+        <p id="watch-live-status">Non connecté.</p>
+        <label>
+          URL bridge JSON (ex: https://mon-bridge/watch/live)
+          <input id="watch-bridge-url" placeholder="https://..." />
+        </label>
+        <label>
+          Token API bridge
+          <input id="watch-bridge-token" placeholder="Bearer token..." />
+        </label>
+        <label>
+          Alerte HR max
+          <input id="hr-alert-threshold" type="number" min="80" max="220" value="170" />
+        </label>
+        <div class="data-actions">
+          <button id="watch-live-connect-btn">Connecter live</button>
+          <button id="watch-live-disconnect-btn" class="danger">Déconnecter</button>
+        </div>
+        <h3>Cloud sync (compte)</h3>
+        <label>
+          Email
+          <input id="cloud-email" type="email" placeholder="you@example.com" />
+        </label>
+        <label>
+          Mot de passe
+          <input id="cloud-password" type="password" placeholder="********" />
+        </label>
+        <div class="data-actions">
+          <button id="cloud-register-btn">Créer compte</button>
+          <button id="cloud-login-btn">Se connecter</button>
+          <button id="cloud-save-btn">Sync vers cloud</button>
+          <button id="cloud-load-btn">Sync depuis cloud</button>
+        </div>
+        <p id="cloud-status">Cloud non connecté.</p>
+      </section>
+
+      <section class="card">
+        <h2>Historique (7 derniers jours)</h2>
+        <ul id="history-list" class="list"></ul>
+      </section>
+
+      <section class="card full-width">
+        <h2>Graphiques simples</h2>
+        <h3>Volume par jour (séries)</h3>
+        <canvas id="daily-chart" width="820" height="220" aria-label="Graphique volume journalier"></canvas>
+        <h3>Top exercices (séries)</h3>
+        <canvas id="exercise-chart" width="820" height="220" aria-label="Graphique volume par exercice"></canvas>
+      </section>
+
+      <section class="card full-width">
+        <h2>Motivation & défis</h2>
+        <p id="challenge">Défi du jour: complétez 3 séries sans interruption.</p>
+      </section>
+    </main>
+
+    <footer>
+      <small>FitoPro • MVP local (données sauvegardées dans votre navigateur)</small>
+    </footer>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <canvas id="hr-live-chart" width="900" height="220"></canvas>
+
+    <script src="src/state.js"></script>
+    <script src="src/timer.js"></script>
+    <script src="src/watch.js"></script>
+    <script src="src/ui.js"></script>
+    <script src="logic.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

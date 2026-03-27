@@ -1,0 +1,32 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g1" x1="32" y1="24" x2="220" y2="230" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5AC8FA"/>
+      <stop offset="1" stop-color="#007AFF"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="82" y1="76" x2="170" y2="176" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff" stop-opacity="0.96"/>
+      <stop offset="1" stop-color="#E2E8F0" stop-opacity="0.95"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="16" y="16" width="224" height="224" rx="56" fill="url(#g1)"/>
+
+  <!-- Dumbbell mascot ears -->
+  <circle cx="72" cy="74" r="20" fill="#0EA5E9" opacity="0.35"/>
+  <circle cx="184" cy="74" r="20" fill="#0EA5E9" opacity="0.35"/>
+
+  <!-- Fetish mascot face -->
+  <circle cx="128" cy="126" r="58" fill="url(#g2)"/>
+  <circle cx="108" cy="120" r="6" fill="#0F172A"/>
+  <circle cx="148" cy="120" r="6" fill="#0F172A"/>
+  <path d="M112 144C117 152 139 152 144 144" stroke="#0F172A" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- Letter F mark -->
+  <path d="M92 92H168M92 92V170M92 128H152" stroke="#007AFF" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Dumbbell base -->
+  <rect x="72" y="188" width="112" height="12" rx="6" fill="#0F172A" opacity="0.2"/>
+  <rect x="64" y="182" width="16" height="24" rx="4" fill="#0F172A" opacity="0.25"/>
+  <rect x="176" y="182" width="16" height="24" rx="4" fill="#0F172A" opacity="0.25"/>
+</svg>
