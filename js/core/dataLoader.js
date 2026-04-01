@@ -24,6 +24,25 @@
         window.state.profile = {
           ...window.state.profile,
           ...profile,
+          preferred_equipment:
+            profile.preferred_equipment ||
+            profile.settings?.preferred_equipment ||
+            window.state.profile?.preferred_equipment ||
+            "mixed",
+          favorite_exercises:
+            profile.favorite_exercises ||
+            profile.settings?.favorite_exercises ||
+            window.state.profile?.favorite_exercises ||
+            [],
+          recent_exercises:
+            profile.recent_exercises ||
+            profile.settings?.recent_exercises ||
+            window.state.profile?.recent_exercises ||
+            [],
+          starter_pack_applied:
+            typeof profile.starter_pack_applied === "boolean"
+              ? profile.starter_pack_applied
+              : !!profile.settings?.starter_pack_applied,
           settings: {
             ...DEFAULT_SETTINGS,
             ...(window.state.profile?.settings || {}),

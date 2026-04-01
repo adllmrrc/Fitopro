@@ -38,6 +38,7 @@ const {
   DEFAULT_WORKOUTS,
   EXERCISE_LIBRARY,
   EXERCISE_LOOKUP,
+  EXERCISE_PACKS,
   EXERCISE_POOL: EX_POOL
 } = window.FITOPRO_DATA;
 const {
@@ -48,6 +49,23 @@ const {
   getWeeklyCount,
   getWeeklyActivity,
 } = window.FITOPRO_STATS;
+
+const BUILDER_FILTERS = [
+  { id: 'all', label: 'All' },
+  { id: 'favorites', label: 'Favorites' },
+  { id: 'recent', label: 'Recent' },
+  { id: 'bodyweight', label: 'Bodyweight', category: 'Bodyweight' },
+  { id: 'machines', label: 'Machines', category: 'Machines' },
+  { id: 'free', label: 'Free Weights', category: 'Free Weights' },
+  { id: 'core_cardio', label: 'Core/Cardio', category: 'Core & Cardio' },
+  { id: 'chest', label: 'Chest', muscle: 'Chest' },
+  { id: 'back', label: 'Back', muscle: 'Back' },
+  { id: 'legs', label: 'Legs', muscle: 'Legs' },
+  { id: 'shoulders', label: 'Shoulders', muscle: 'Shoulders' },
+  { id: 'arms', label: 'Arms', muscle: 'Arms' },
+  { id: 'core', label: 'Core', muscle: 'Core' },
+  { id: 'cardio', label: 'Cardio', muscle: 'Cardio' },
+];
 
 async function ensureProfileRecord(user, fallbackName = '') {
   if (!user?.id) return;
@@ -107,9 +125,9 @@ if (typeof sb !== 'undefined') {
       updateAllUI();
     } catch (err) {
       console.error('Auth sync failed:', err);
-      hideSyncBanner();
       setSyncStatus('offline', 'Sync failed');
-      showToast('Cloud sync failed. Check Supabase policies for the profiles table.', 'error');
+      showSyncBanner(getFriendlySyncError(err));
+      showToast(getFriendlySyncError(err), 'error');
       updateAllUI();
     }
   });
@@ -166,7 +184,7 @@ window.handleAuthSubmit = async () => {
     }
   } catch (err) {
     hideLoading();
-    showAuthError(err.message || 'Authentication failed');
+    showAuthError(getFriendlyAuthError(err, authMode));
   } finally { btn.disabled = false; }
 };
 
@@ -183,7 +201,7 @@ window.handleGoogleAuth = async () => {
     if (error) throw error;
   } catch (err) {
     hideLoading();
-    showToast('❌ ' + err.message, 'error');
+    showToast('❌ ' + getFriendlyAuthError(err, 'login'), 'error');
   }
 };
 
@@ -340,10 +358,141 @@ window.pickWorkout = (i) => {
   setTimeout(() => startWorkout(i), 220);
 };
 
+let builderFilter = 'all';
+let draggedExerciseRow = null;
+let touchDraggedExerciseRow = null;
+
+function getFavoriteExercises() {
+  return state.profile?.favorite_exercises || [];
+}
+
+function getRecentExercises() {
+  return state.profile?.recent_exercises || [];
+}
+
+function queueProfilePreferenceUpdate(updates) {
+  saveProfile(updates).catch((err) => console.error('Preference sync failed:', err));
+}
+
+function rememberRecentExercises(exerciseNames = []) {
+  const next = [
+    ...exerciseNames.filter(Boolean),
+    ...getRecentExercises(),
+  ].filter((name, index, array) => array.indexOf(name) === index).slice(0, 8);
+  queueProfilePreferenceUpdate({ recent_exercises: next });
+  renderBuilderFilters();
+}
+
+function toggleFavoriteExercise(name) {
+  if (!name) return;
+  const favorites = getFavoriteExercises();
+  const next = favorites.includes(name)
+    ? favorites.filter((item) => item !== name)
+    : [name, ...favorites].slice(0, 12);
+  queueProfilePreferenceUpdate({ favorite_exercises: next });
+  renderBuilderFilters();
+  refreshBuilderRows();
+}
+
+function getTemplateWorkout(pack) {
+  return {
+    id: `tpl_${pack.id}_${Date.now()}`,
+    name: pack.workout.name,
+    icon: pack.icon,
+    description: pack.workout.description,
+    exercises: pack.workout.exercises.map((exerciseName) => {
+      const preset = getExercisePreset(exerciseName);
+      return {
+        name: preset.name,
+        icon: preset.icon,
+        sets: preset.sets,
+        reps: preset.reps,
+        rest: preset.rest,
+        weight: preset.weight || 0,
+      };
+    }),
+    createdAt: new Date().toISOString(),
+  };
+}
+
+function getRecommendedTemplates(profile = state.profile || {}) {
+  const levelRank = { beginner: 1, intermediate: 2, advanced: 3 };
+  const targetLevel = levelRank[profile.experience_level || 'intermediate'] || 2;
+  const preferredEquipment = profile.preferred_equipment || 'mixed';
+
+  return EXERCISE_PACKS
+    .map((pack) => ({
+      ...pack,
+      recommended:
+        (levelRank[pack.level] || 2) <= targetLevel &&
+        (pack.equipment.includes(preferredEquipment) || pack.equipment.includes('mixed')),
+    }))
+    .sort((a, b) => Number(b.recommended) - Number(a.recommended));
+}
+
+function renderBuilderTemplates() {
+  const container = document.getElementById('builder-templates');
+  if (!container) return;
+  const templates = getRecommendedTemplates().slice(0, 5);
+  container.innerHTML = templates.map((pack) => `
+    <button class="template-card ${pack.recommended ? 'recommended' : ''}" onclick="loadBuilderTemplate('${pack.id}')">
+      <span class="template-icon">${pack.icon}</span>
+      <span class="template-copy">
+        <span class="template-title">${pack.title}</span>
+        <span class="template-desc">${pack.desc}</span>
+      </span>
+      ${pack.recommended ? '<span class="template-badge">Recommended</span>' : ''}
+    </button>
+  `).join('');
+}
+
+function renderBuilderFilters() {
+  const container = document.getElementById('builder-filters');
+  if (!container) return;
+  container.innerHTML = BUILDER_FILTERS.map((filter) => `
+    <button class="filter-chip ${builderFilter === filter.id ? 'active' : ''}" onclick="setBuilderFilter('${filter.id}')">
+      ${filter.label}
+    </button>
+  `).join('');
+}
+
+window.setBuilderFilter = (filterId) => {
+  builderFilter = filterId;
+  renderBuilderFilters();
+  refreshBuilderRows();
+};
+
+function matchesBuilderFilter(name) {
+  if (builderFilter === 'all') return true;
+  if (builderFilter === 'favorites') return getFavoriteExercises().includes(name);
+  if (builderFilter === 'recent') return getRecentExercises().includes(name);
+  const preset = EXERCISE_LOOKUP[name];
+  if (!preset) return false;
+  const target = BUILDER_FILTERS.find((filter) => filter.id === builderFilter);
+  if (!target) return true;
+  if (target.category) return preset.category === target.category;
+  if (target.muscle) return preset.muscle === target.muscle;
+  return true;
+}
+
+function refreshBuilderRows() {
+  document.querySelectorAll('#ex-list .ex-row').forEach((row) => {
+    const select = row.querySelector('.ex-preset');
+    const searchInput = row.querySelector('.ex-search-t');
+    const currentName = row.dataset.exerciseName || row.querySelector('.ex-name-t')?.value || '';
+    if (select) {
+      select.innerHTML = getExerciseOptionsMarkup(currentName, searchInput?.value || '');
+      if (select.querySelector(`option[value="${currentName}"]`)) select.value = currentName;
+    }
+    const favBtn = row.querySelector('.ex-fav');
+    if (favBtn) favBtn.classList.toggle('active', getFavoriteExercises().includes(currentName));
+  });
+}
+
 function getExerciseOptionsMarkup(selectedName = '', searchTerm = '') {
   const query = searchTerm.trim().toLowerCase();
   const groups = EXERCISE_LIBRARY.map(group => {
-    const matches = group.exercises.filter(name => !query || name.toLowerCase().includes(query));
+    const matches = group.exercises.filter(name => (!query || name.toLowerCase().includes(query)) && matchesBuilderFilter(name));
     if (!matches.length) return '';
     return `
     <optgroup label="${group.label}">
@@ -397,9 +546,6 @@ function updateBuilderSummary() {
   if (timeEl) timeEl.textContent = `${estimatedMinutes}m`;
 }
 
-let draggedExerciseRow = null;
-let touchDraggedExerciseRow = null;
-
 function applyExercisePreset(row, exerciseName, syncSearch = true) {
   const preset = getExercisePreset(exerciseName);
   const iconEl = row.querySelector('.ex-ico');
@@ -409,6 +555,7 @@ function applyExercisePreset(row, exerciseName, syncSearch = true) {
   const setsInput = row.querySelector('[data-field=sets]');
   const repsInput = row.querySelector('[data-field=reps]');
   const restInput = row.querySelector('[data-field=rest]');
+  const favoriteBtn = row.querySelector('.ex-fav');
 
   if (iconEl) iconEl.textContent = preset.icon;
   if (nameInput) nameInput.value = preset.name;
@@ -418,6 +565,7 @@ function applyExercisePreset(row, exerciseName, syncSearch = true) {
   if (restInput) restInput.value = preset.rest;
   row.dataset.exerciseName = preset.name;
   row.dataset.exerciseIcon = preset.icon;
+  row.dataset.exerciseMuscle = preset.muscle || '';
 
   if (select) {
     select.innerHTML = getExerciseOptionsMarkup(preset.name, searchInput?.value || preset.name);
@@ -425,6 +573,7 @@ function applyExercisePreset(row, exerciseName, syncSearch = true) {
       select.value = preset.name;
     }
   }
+  if (favoriteBtn) favoriteBtn.classList.toggle('active', getFavoriteExercises().includes(preset.name));
   updateBuilderSummary();
 }
 
@@ -432,6 +581,7 @@ function wireExerciseRow(row) {
   const searchInput = row.querySelector('.ex-search-t');
   const select = row.querySelector('.ex-preset');
   const nameInput = row.querySelector('.ex-name-t');
+  const favoriteBtn = row.querySelector('.ex-fav');
 
   searchInput?.addEventListener('input', (event) => {
     const query = event.target.value.trim();
@@ -460,6 +610,7 @@ function wireExerciseRow(row) {
   select?.addEventListener('change', (event) => {
     if (!event.target.value) return;
     applyExercisePreset(row, event.target.value);
+    rememberRecentExercises([event.target.value]);
   });
 
   nameInput?.addEventListener('input', (event) => {
@@ -475,6 +626,11 @@ function wireExerciseRow(row) {
     const iconEl = row.querySelector('.ex-ico');
     if (iconEl) iconEl.textContent = '🏋️';
     updateBuilderSummary();
+  });
+
+  favoriteBtn?.addEventListener('click', () => {
+    const currentName = row.dataset.exerciseName || nameInput?.value?.trim();
+    toggleFavoriteExercise(currentName);
   });
 
   row.querySelectorAll('[data-field=sets],[data-field=reps],[data-field=rest]').forEach((input) => {
@@ -539,9 +695,9 @@ document.getElementById('icon-picker')?.addEventListener('click', e => {
   opt.classList.add('selected'); selectedIcon = opt.dataset.icon;
 });
 
-window.addExToList = () => {
+window.addExToList = (preferredName = '') => {
   const list = document.getElementById('ex-list'); if (!list) return;
-  const name = EX_POOL[Math.floor(Math.random()*EX_POOL.length)];
+  const name = preferredName || EX_POOL[Math.floor(Math.random()*EX_POOL.length)];
   const preset = getExercisePreset(name);
   const d = document.createElement('div'); d.className = 'ex-row';
   d.innerHTML = `
@@ -559,12 +715,33 @@ window.addExToList = () => {
         <div><div style="font-size:9px;color:var(--t3);font-weight:700;margin-bottom:3px">REST(s)</div><input class="ex-meta-inp" type="number" value="${preset.rest}" min="0" max="600" data-field="rest"></div>
       </div>
     </div>
+    <button class="ex-fav ${getFavoriteExercises().includes(name) ? 'active' : ''}" type="button" title="Favorite this exercise">★</button>
     <div class="ex-rm" onclick="removeExerciseRow(this)">✕</div>
   `;
   list.appendChild(d);
   wireExerciseRow(d);
   applyExercisePreset(d, name);
   d.querySelector('.ex-name-t').focus();
+};
+
+window.loadBuilderTemplate = (templateId) => {
+  const template = EXERCISE_PACKS.find((pack) => pack.id === templateId);
+  if (!template) return;
+
+  const list = document.getElementById('ex-list');
+  if (!list) return;
+
+  const workout = getTemplateWorkout(template);
+  document.getElementById('plan-name').value = workout.name;
+  document.getElementById('plan-desc').value = workout.description;
+  list.innerHTML = '';
+  selectedIcon = workout.icon;
+  document.querySelectorAll('.icon-opt').forEach((option) => {
+    option.classList.toggle('selected', option.dataset.icon === selectedIcon);
+  });
+  workout.exercises.forEach((exercise) => addExToList(exercise.name));
+  rememberRecentExercises(workout.exercises.map((exercise) => exercise.name));
+  showToast(`Loaded ${template.title}`, 'success');
 };
 
 window.removeExerciseRow = (button) => {
@@ -589,10 +766,13 @@ window.saveNewWorkout = async () => {
   const workout = { id: 'c_' + Date.now(), name, icon: selectedIcon, description: desc || `${exercises.length} exercises`, exercises, createdAt: new Date().toISOString() };
   showLoading('Saving workout...');
   await saveCustomWorkout(workout);
+  rememberRecentExercises(exercises.map((exercise) => exercise.name));
   hideLoading();
   document.getElementById('plan-name').value = '';
   document.getElementById('plan-desc').value = '';
   document.getElementById('ex-list').innerHTML = '';
+  renderBuilderTemplates();
+  renderBuilderFilters();
   updateBuilderSummary();
   closeModal('new-workout-modal');
   showToast('✅ ' + name + ' saved!', 'success');
@@ -654,6 +834,69 @@ function setPhase(phase, phaseColor, ringColor, exercise, sub, coach) {
     burst.classList.add(phase.toLowerCase() === 'rest' ? 'rest' : 'work', 'show');
   }
 }
+
+function getFriendlyAuthError(err, mode = 'login') {
+  const raw = err?.message || 'Authentication failed';
+  const msg = raw.toLowerCase();
+
+  if (msg.includes('email rate limit exceeded')) {
+    return 'Too many email attempts were sent. Wait a few minutes, or sign in if the account already exists.';
+  }
+  if (msg.includes('user already registered')) {
+    return 'This email is already registered. Try signing in instead.';
+  }
+  if (msg.includes('invalid login credentials')) {
+    return 'Incorrect email or password. Double-check your details and try again.';
+  }
+  if (msg.includes('email not confirmed')) {
+    return 'Your email is not confirmed yet. Open the confirmation email, then sign in again.';
+  }
+  if (msg.includes('password should be at least')) {
+    return 'Use a stronger password with at least 6 characters.';
+  }
+  if (msg.includes('network')) {
+    return mode === 'register'
+      ? 'The network request failed while creating your account. Check your connection and try again.'
+      : 'The network request failed while signing in. Check your connection and try again.';
+  }
+  return raw;
+}
+
+function getFriendlySyncError(err) {
+  const raw = err?.message || 'Cloud sync failed.';
+  const msg = raw.toLowerCase();
+  if (msg.includes('row-level security') || msg.includes('permission denied')) {
+    return 'Cloud sync is blocked by your Supabase table policies. Tap to retry after fixing the policy.';
+  }
+  if (msg.includes('network')) {
+    return 'Cloud sync is offline right now. Tap to retry when your connection is back.';
+  }
+  return 'Cloud sync failed. Tap this banner to retry.';
+}
+
+window.retryCloudSync = async () => {
+  if (!state.user) {
+    showToast('Sign in first to sync your cloud data.', 'error');
+    return;
+  }
+
+  try {
+    setSyncStatus('syncing', 'Retrying...');
+    showSyncBanner('Retrying cloud sync...');
+    await ensureProfileRecord(state.user);
+    await loadAllUserData(state.user);
+    await flushPendingQueue();
+    hideSyncBanner();
+    setSyncStatus('online', 'Synced');
+    updateAllUI();
+    showToast('Cloud sync restored.', 'success');
+  } catch (err) {
+    console.error('Retry sync failed:', err);
+    setSyncStatus('offline', 'Sync failed');
+    showSyncBanner(getFriendlySyncError(err));
+    showToast(getFriendlySyncError(err), 'error');
+  }
+};
 
 window.timerToggle = () => {
   if (timerRunning) {
@@ -1074,13 +1317,33 @@ window.completeOnboarding = async () => {
   if (!name) { showToast('⚠️ Enter your name'); return; }
   const goal = parseInt(document.getElementById('onboard-goal').value)||4;
   const exp = document.getElementById('onboard-exp').value||'intermediate';
+  const equip = document.getElementById('onboard-equip')?.value || 'mixed';
   const weight = parseFloat(document.getElementById('onboard-weight').value)||75;
   showLoading('Saving...');
-  await saveProfile({ display_name: name, weekly_goal: goal, experience_level: exp, body_weight: weight, onboarded: true });
+  await saveProfile({
+    display_name: name,
+    weekly_goal: goal,
+    experience_level: exp,
+    preferred_equipment: equip,
+    body_weight: weight,
+    onboarded: true
+  });
+  const shouldSeedStarterPlans = !state.workouts.length && !state.profile.starter_pack_applied;
+  if (shouldSeedStarterPlans) {
+    const recommended = getRecommendedTemplates({
+      ...state.profile,
+      experience_level: exp,
+      preferred_equipment: equip,
+    }).slice(0, 2);
+    for (const pack of recommended) {
+      await saveCustomWorkout(getTemplateWorkout(pack));
+    }
+    await saveProfile({ starter_pack_applied: true });
+  }
   hideLoading();
   closeModal('onboarding-modal');
   updateAllUI();
-  showToast(`🎉 Welcome, ${name}! Time to train.`, 'success');
+  showToast(`🎉 Welcome, ${name}! ${shouldSeedStarterPlans ? 'Starter plans are ready.' : 'Time to train.'}`, 'success');
   const dot = document.getElementById('notif-dot'); if (dot) dot.style.display = 'block';
 };
 
@@ -1156,6 +1419,7 @@ document.addEventListener('keydown', e => {
 // ════════════════════════════════════════
 function updateAllUI() {
   updateHomeUI(); updateAuthUI();
+  renderBuilderTemplates(); renderBuilderFilters(); refreshBuilderRows();
   if (document.getElementById('page-stats')?.classList.contains('active')) { renderStats(); renderCharts(); }
   if (document.getElementById('page-profile')?.classList.contains('active')) renderProfilePage();
 }

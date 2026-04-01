@@ -363,6 +363,7 @@ canvas{width:100%!important;display:block;}
 @media(min-width:440px){.sheet{border-radius:24px;max-height:88vh;}.overlay{align-items:center;padding:16px;}}
 
 /* —— PREMIUM BUILDER + TIMER OVERRIDES —— */
+.sync-banner.tappable{cursor:pointer;}
 .builder-sheet{padding-bottom:22px;}
 .builder-hero{background:radial-gradient(circle at top right, rgba(0,180,255,.14), transparent 36%),linear-gradient(180deg, rgba(16,23,37,.98), rgba(9,13,22,.98));border:1px solid rgba(255,255,255,.06);border-radius:22px;padding:16px;margin-bottom:16px;box-shadow:0 18px 40px rgba(0,0,0,.24);}
 .builder-kicker{font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--t3);margin-bottom:8px;}
@@ -372,8 +373,22 @@ canvas{width:100%!important;display:block;}
 .builder-stat-val{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;line-height:1;}
 .builder-stat-lbl{font-size:10px;color:var(--t3);font-weight:700;letter-spacing:1px;text-transform:uppercase;}
 .builder-section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin:18px 0 12px;}
+.builder-section-head.compact{margin:14px 0 10px;}
 .builder-section-copy{font-size:12px;color:var(--t3);line-height:1.5;max-width:230px;}
 .builder-add-btn{width:auto;flex-shrink:0;white-space:nowrap;}
+.template-strip{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin-bottom:14px;padding-bottom:2px;}
+.template-strip::-webkit-scrollbar{display:none;}
+.template-card{background:linear-gradient(180deg,rgba(17,24,39,.96),rgba(10,15,25,.96));border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:12px;display:flex;align-items:flex-start;gap:10px;min-width:220px;text-align:left;color:var(--t1);font-family:'Outfit',sans-serif;cursor:pointer;box-shadow:0 12px 28px rgba(0,0,0,.16);}
+.template-card.recommended{border-color:rgba(57,255,20,.24);background:linear-gradient(180deg,rgba(17,24,39,.98),rgba(8,18,16,.98));}
+.template-icon{font-size:22px;flex-shrink:0;}
+.template-copy{display:flex;flex-direction:column;gap:4px;min-width:0;}
+.template-title{font-size:14px;font-weight:800;letter-spacing:-.2px;}
+.template-desc{font-size:11px;color:var(--t3);line-height:1.4;}
+.template-badge{font-size:10px;font-weight:800;color:var(--g1);margin-left:auto;white-space:nowrap;}
+.builder-filters{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin-bottom:12px;}
+.builder-filters::-webkit-scrollbar{display:none;}
+.filter-chip{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:999px;padding:9px 12px;font-size:11px;font-weight:800;color:var(--t2);white-space:nowrap;cursor:pointer;font-family:'Outfit',sans-serif;}
+.filter-chip.active{background:rgba(0,180,255,.12);border-color:rgba(0,180,255,.24);color:var(--blue);}
 .builder-list{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;}
 .icon-opt{border-radius:12px;background:linear-gradient(180deg,var(--s2),#101827);border:1px solid rgba(255,255,255,.07);transition:background .15s,border-color .15s,transform .15s;box-shadow:0 8px 18px rgba(0,0,0,.16);}
 .ex-row{align-items:flex-start;gap:12px;background:linear-gradient(180deg,rgba(17,24,39,.96),rgba(10,15,25,.96));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:14px;margin-bottom:0;box-shadow:0 14px 28px rgba(0,0,0,.16);}
@@ -381,6 +396,8 @@ canvas{width:100%!important;display:block;}
 .ex-name-t{font-weight:800;}
 .ex-meta-row{gap:8px;margin-top:10px;}
 .ex-meta-inp{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:8px 8px;}
+.ex-fav{width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);color:var(--t3);font-size:16px;cursor:pointer;flex-shrink:0;}
+.ex-fav.active{color:var(--yellow);border-color:rgba(255,214,10,.22);background:rgba(255,214,10,.08);}
 .ex-rm{padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);transition:color .15s,transform .15s;}
 
 .timer-wrap{gap:12px;}

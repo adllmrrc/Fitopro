@@ -249,12 +249,100 @@
     "Elliptical Intervals": { icon: "⚡", sets: 6, reps: 60, rest: 30 },
   };
 
+  const MUSCLE_DEFAULTS = {
+    Bodyweight: "Full Body",
+    Machines: "Strength",
+    "Free Weights": "Strength",
+    "Core & Cardio": "Core",
+  };
+
+  const EXERCISE_MUSCLE_OVERRIDES = {
+    "Push-ups": "Chest",
+    "Wide Push-ups": "Chest",
+    "Diamond Push-ups": "Arms",
+    "Pike Push-ups": "Shoulders",
+    "Pull-ups": "Back",
+    "Chin-ups": "Back",
+    "Dips": "Chest",
+    "Inverted Rows": "Back",
+    "Bodyweight Squats": "Legs",
+    "Jump Squats": "Legs",
+    "Walking Lunges": "Legs",
+    "Bulgarian Split Squats": "Legs",
+    "Glute Bridges": "Legs",
+    "Burpees": "Cardio",
+    "Mountain Climbers": "Cardio",
+    "High Knees": "Cardio",
+    "Plank": "Core",
+    "Side Plank": "Core",
+    "Hollow Hold": "Core",
+    "Russian Twists": "Core",
+    "Leg Raises": "Core",
+    "Sit-ups": "Core",
+    "Crunches": "Core",
+    "Leg Press": "Legs",
+    "Leg Extension": "Legs",
+    "Seated Leg Curl": "Legs",
+    "Lying Leg Curl": "Legs",
+    "Calf Raise Machine": "Legs",
+    "Chest Press Machine": "Chest",
+    "Incline Chest Press Machine": "Chest",
+    "Pec Deck": "Chest",
+    "Cable Fly": "Chest",
+    "Lat Pulldown": "Back",
+    "Seated Cable Row": "Back",
+    "Assisted Pull-up Machine": "Back",
+    "Assisted Dip Machine": "Chest",
+    "Smith Machine Squat": "Legs",
+    "Smith Machine Bench Press": "Chest",
+    "Hack Squat": "Legs",
+    "Hip Abductor Machine": "Legs",
+    "Hip Adductor Machine": "Legs",
+    "Glute Drive Machine": "Legs",
+    "Shoulder Press Machine": "Shoulders",
+    "Cable Lateral Raise": "Shoulders",
+    "Triceps Pushdown": "Arms",
+    "Cable Curl": "Arms",
+    "Ab Crunch Machine": "Core",
+    "Bench Press": "Chest",
+    "Incline DB Press": "Chest",
+    "Shoulder Press": "Shoulders",
+    "Overhead Press": "Shoulders",
+    "Arnold Press": "Shoulders",
+    "Barbell Row": "Back",
+    "Romanian Deadlift": "Legs",
+    "Deadlift": "Legs",
+    "Barbell Squat": "Legs",
+    "Goblet Squat": "Legs",
+    "Hip Thrust": "Legs",
+    "Dumbbell Fly": "Chest",
+    "Lateral Raise": "Shoulders",
+    "Face Pull": "Shoulders",
+    "Hammer Curl": "Arms",
+    "Bicep Curl": "Arms",
+    "Tricep Extension": "Arms",
+    "Skull Crusher": "Arms",
+    "Close Grip Bench": "Arms",
+    "Upright Row": "Shoulders",
+    "Cable Crunch": "Core",
+    "Ab Wheel Rollout": "Core",
+    "Hanging Knee Raise": "Core",
+    "Flutter Kicks": "Core",
+    "Jump Rope": "Cardio",
+    "Rowing Machine": "Cardio",
+    "Bike Sprint": "Cardio",
+    "Treadmill Run": "Cardio",
+    "Stair Climber": "Cardio",
+    "Elliptical Intervals": "Cardio",
+  };
+
   const EXERCISE_LOOKUP = Object.freeze(
     EXERCISE_LIBRARY.reduce((lookup, group) => {
       group.exercises.forEach((name) => {
         lookup[name] = {
           name,
           category: group.label,
+          muscle: EXERCISE_MUSCLE_OVERRIDES[name] || MUSCLE_DEFAULTS[group.label],
           ...CATEGORY_DEFAULTS[group.label],
           ...(EXERCISE_OVERRIDES[name] || {}),
         };
@@ -262,6 +350,74 @@
       return lookup;
     }, {})
   );
+
+  const EXERCISE_PACKS = [
+    {
+      id: "starter_strength",
+      title: "Starter Strength",
+      desc: "Balanced full-body strength foundation",
+      icon: "💪",
+      level: "beginner",
+      equipment: ["mixed", "free"],
+      workout: {
+        name: "Starter Strength",
+        description: "Full body · strength basics",
+        exercises: ["Goblet Squat", "Bench Press", "Seated Cable Row", "Plank"],
+      },
+    },
+    {
+      id: "bodyweight_foundation",
+      title: "Bodyweight Base",
+      desc: "Simple no-gym full-body plan",
+      icon: "🤸",
+      level: "beginner",
+      equipment: ["bodyweight", "mixed"],
+      workout: {
+        name: "Bodyweight Base",
+        description: "No equipment · full body",
+        exercises: ["Push-ups", "Bodyweight Squats", "Inverted Rows", "Mountain Climbers"],
+      },
+    },
+    {
+      id: "machine_upper",
+      title: "Machine Upper",
+      desc: "Chest, back, shoulders with machines",
+      icon: "🏋️",
+      level: "intermediate",
+      equipment: ["machines", "mixed"],
+      workout: {
+        name: "Machine Upper",
+        description: "Machines · upper body",
+        exercises: ["Chest Press Machine", "Lat Pulldown", "Seated Cable Row", "Shoulder Press Machine", "Triceps Pushdown"],
+      },
+    },
+    {
+      id: "lower_power",
+      title: "Lower Power",
+      desc: "Leg-focused strength and volume",
+      icon: "🦵",
+      level: "intermediate",
+      equipment: ["free", "machines", "mixed"],
+      workout: {
+        name: "Lower Power",
+        description: "Legs · glutes · hamstrings",
+        exercises: ["Barbell Squat", "Romanian Deadlift", "Leg Press", "Calf Raise Machine"],
+      },
+    },
+    {
+      id: "push_pull_performance",
+      title: "Push Pull Performance",
+      desc: "Higher-output upper split for experienced lifters",
+      icon: "⚡",
+      level: "advanced",
+      equipment: ["free", "mixed"],
+      workout: {
+        name: "Push Pull Performance",
+        description: "Upper body · performance",
+        exercises: ["Bench Press", "Pull-ups", "Overhead Press", "Barbell Row", "Hammer Curl", "Skull Crusher"],
+      },
+    },
+  ];
 
   const EXERCISE_POOL = Array.from(
     new Set(EXERCISE_LIBRARY.flatMap((group) => group.exercises))
@@ -272,6 +428,7 @@
     DEFAULT_WORKOUTS,
     EXERCISE_LIBRARY,
     EXERCISE_LOOKUP,
+    EXERCISE_PACKS,
     EXERCISE_POOL,
   });
 })();

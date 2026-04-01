@@ -138,6 +138,13 @@
         <span class="icon-opt selected" data-icon="💪">💪</span><span class="icon-opt" data-icon="🏋️">🏋️</span><span class="icon-opt" data-icon="🦵">🦵</span><span class="icon-opt" data-icon="🤸">🤸</span><span class="icon-opt" data-icon="🔥">🔥</span><span class="icon-opt" data-icon="⚡">⚡</span><span class="icon-opt" data-icon="🎯">🎯</span><span class="icon-opt" data-icon="🏃">🏃</span><span class="icon-opt" data-icon="🧘">🧘</span><span class="icon-opt" data-icon="🚴">🚴</span>
       </div>
     </div>
+    <div class="builder-section-head compact">
+      <div>
+        <div class="sec-label" style="margin:0 0 6px">Starter Packs</div>
+        <div class="builder-section-copy">Load a proven starter plan and customize it from there.</div>
+      </div>
+    </div>
+    <div class="template-strip" id="builder-templates"></div>
     <div class="builder-section-head">
       <div>
         <div class="sec-label" style="margin:0 0 6px">Exercises</div>
@@ -145,6 +152,7 @@
       </div>
       <button class="btn-ghost btn-sm builder-add-btn" onclick="addExToList()">➕ Add Exercise</button>
     </div>
+    <div class="builder-filters" id="builder-filters"></div>
     <div class="builder-list" id="ex-list"></div>
     <div class="auth-actions">
       <button class="btn-primary" onclick="saveNewWorkout()">💾 Save Workout</button>
@@ -235,7 +243,9 @@
         </select>
       </div>
     </div>
+    <div class="inp-group"><div class="inp-lbl">Preferred Equipment</div><select id="onboard-equip" class="inp"><option value="mixed" selected>Mixed gym</option><option value="bodyweight">Bodyweight only</option><option value="machines">Mostly machines</option><option value="free">Mostly free weights</option></select></div>
     <div class="inp-group"><div class="inp-lbl">Body Weight (kg)</div><input id="onboard-weight" class="inp" type="number" placeholder="75" min="30" max="300"></div>
+    <div style="font-size:12px;color:var(--t3);margin-top:-4px;line-height:1.5">We’ll generate starter plans for your level and equipment if your workout library is still empty.</div>
     <button class="btn-primary" onclick="completeOnboarding()" style="margin-top:8px">🚀 Let's Go!</button>
   </div>
 </div>
@@ -283,7 +293,7 @@
 
 <!-- ═══ HOME ═══ -->
 <div id="page-home" class="page active">
-  <div id="sync-banner" style="display:none" class="sync-banner">🔄 <span id="sync-banner-msg">Syncing your data...</span></div>
+  <div id="sync-banner" style="display:none" class="sync-banner tappable" onclick="retryCloudSync()">🔄 <span id="sync-banner-msg">Syncing your data...</span></div>
 
   <div class="home-hero">
     <div class="home-hero-top">

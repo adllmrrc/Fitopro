@@ -22,13 +22,72 @@
   }
 
   function normalizeProfile(updates = {}) {
+    const mergedSettings = {
+      ...DEFAULT_SETTINGS,
+      ...(window.state.profile?.settings || {}),
+      ...(updates.settings || {}),
+    };
+
     return {
       ...window.state.profile,
       ...updates,
+      preferred_equipment:
+        updates.preferred_equipment ||
+        updates.settings?.preferred_equipment ||
+        window.state.profile?.preferred_equipment ||
+        window.state.profile?.settings?.preferred_equipment ||
+        "mixed",
+      favorite_exercises: Array.isArray(updates.favorite_exercises)
+        ? updates.favorite_exercises
+        : Array.isArray(updates.settings?.favorite_exercises)
+          ? updates.settings.favorite_exercises
+        : Array.isArray(window.state.profile?.favorite_exercises)
+          ? window.state.profile.favorite_exercises
+          : Array.isArray(window.state.profile?.settings?.favorite_exercises)
+            ? window.state.profile.settings.favorite_exercises
+          : [],
+      recent_exercises: Array.isArray(updates.recent_exercises)
+        ? updates.recent_exercises
+        : Array.isArray(updates.settings?.recent_exercises)
+          ? updates.settings.recent_exercises
+        : Array.isArray(window.state.profile?.recent_exercises)
+          ? window.state.profile.recent_exercises
+          : Array.isArray(window.state.profile?.settings?.recent_exercises)
+            ? window.state.profile.settings.recent_exercises
+          : [],
+      starter_pack_applied:
+        typeof updates.starter_pack_applied === "boolean"
+          ? updates.starter_pack_applied
+          : typeof updates.settings?.starter_pack_applied === "boolean"
+            ? updates.settings.starter_pack_applied
+          : !!window.state.profile?.starter_pack_applied,
       settings: {
-        ...DEFAULT_SETTINGS,
-        ...(window.state.profile?.settings || {}),
-        ...(updates.settings || {}),
+        ...mergedSettings,
+        preferred_equipment:
+          updates.preferred_equipment ||
+          mergedSettings.preferred_equipment ||
+          window.state.profile?.preferred_equipment ||
+          "mixed",
+        favorite_exercises: Array.isArray(updates.favorite_exercises)
+          ? updates.favorite_exercises
+          : Array.isArray(mergedSettings.favorite_exercises)
+            ? mergedSettings.favorite_exercises
+            : Array.isArray(window.state.profile?.favorite_exercises)
+              ? window.state.profile.favorite_exercises
+              : [],
+        recent_exercises: Array.isArray(updates.recent_exercises)
+          ? updates.recent_exercises
+          : Array.isArray(mergedSettings.recent_exercises)
+            ? mergedSettings.recent_exercises
+            : Array.isArray(window.state.profile?.recent_exercises)
+              ? window.state.profile.recent_exercises
+              : [],
+        starter_pack_applied:
+          typeof updates.starter_pack_applied === "boolean"
+            ? updates.starter_pack_applied
+            : typeof mergedSettings.starter_pack_applied === "boolean"
+              ? mergedSettings.starter_pack_applied
+              : !!window.state.profile?.starter_pack_applied,
       },
     };
   }

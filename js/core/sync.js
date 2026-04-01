@@ -20,6 +20,68 @@
     return window.state?.user?.id || null;
   }
 
+  function buildProfilePayload(profile, userId) {
+    const source = profile && typeof profile === "object" ? profile : {};
+    const {
+      display_name,
+      bio,
+      weekly_goal,
+      body_weight,
+      height,
+      age,
+      experience_level,
+      avatar_url,
+      xp,
+      level,
+      total_workouts,
+      badges,
+      onboarded,
+      settings,
+      preferred_equipment,
+      favorite_exercises,
+      recent_exercises,
+      starter_pack_applied,
+    } = source;
+
+    return {
+      id: userId,
+      display_name,
+      bio,
+      weekly_goal,
+      body_weight,
+      height,
+      age,
+      experience_level,
+      avatar_url,
+      xp,
+      level,
+      total_workouts,
+      badges,
+      onboarded,
+      settings: {
+        ...(settings || {}),
+        preferred_equipment:
+          preferred_equipment ||
+          settings?.preferred_equipment ||
+          "mixed",
+        favorite_exercises: Array.isArray(favorite_exercises)
+          ? favorite_exercises
+          : Array.isArray(settings?.favorite_exercises)
+            ? settings.favorite_exercises
+            : [],
+        recent_exercises: Array.isArray(recent_exercises)
+          ? recent_exercises
+          : Array.isArray(settings?.recent_exercises)
+            ? settings.recent_exercises
+            : [],
+        starter_pack_applied:
+          typeof starter_pack_applied === "boolean"
+            ? starter_pack_applied
+            : !!settings?.starter_pack_applied,
+      },
+    };
+  }
+
   let syncQueue = readQueue();
 
   async function sync() {
@@ -66,7 +128,7 @@
             break;
 
           case "UPDATE_PROFILE":
-            ({ error } = await window.sb.from("profiles").upsert({ id: userId, ...payload }));
+            ({ error } = await window.sb.from("profiles").upsert(buildProfilePayload(payload, userId)));
             break;
 
           case "ADD_PR":
