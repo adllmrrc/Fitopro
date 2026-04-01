@@ -29,6 +29,19 @@ Options:
 2. Serve the folder with any static server.
 3. Deploy to Vercel or GitHub Pages.
 
+## iPhone install
+
+1. Deploy the app to an `https://` URL.
+2. Open it in Safari on iPhone.
+3. Tap `Share`.
+4. Tap `Add to Home Screen`.
+5. Enable `Open as Web App` if iOS shows that option.
+
+Notes:
+
+- Service workers and full install behavior work on `https://` or `localhost`, not `file://`.
+- Once installed, the app can reopen from the Home Screen and reuse cached static assets offline.
+
 ## Supabase setup
 
 1. Create a Supabase project.
@@ -64,3 +77,4 @@ The included `.nojekyll` file helps GitHub Pages treat the repo as a plain stati
 - The app currently uses browser-global scripts for compatibility with `file://`.
 - `App.js` has been cleaned up, and common data, UI, and stats concerns have been extracted.
 - Further refactoring can continue by splitting timer, workout-flow, and profile logic into dedicated files.
+- PWA files now include `manifest.webmanifest`, `sw.js`, and install icons under `assets/icons/`.

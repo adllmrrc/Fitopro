@@ -3,12 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
+<meta name="application-name" content="FitoPro">
+<meta name="format-detection" content="telephone=no">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FitoPro">
-<meta name="theme-color" content="#050508">
+<meta name="theme-color" content="#0d1728">
 <title>FitoPro</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
 <script defer src="vendor/supabase.js"></script>
 <script defer src="js/core/config.js"></script>
 <script defer src="js/core/state.js"></script>
@@ -17,6 +22,7 @@
 <script defer src="js/core/sync.js"></script>
 <script defer src="js/core/dataLoader.js"></script>
 <script defer src="js/core/dataService.js"></script>
+<script defer src="js/core/pwa.js"></script>
 <script defer src="js/app/appUi.js"></script>
 <script defer src="js/app/appData.js"></script>
 <script defer src="js/app/appStats.js"></script>
@@ -44,7 +50,7 @@
   <div class="splash-wordmark">FitoPro</div>
   <div class="splash-tagline">Track · Train · Transform</div>
   <div class="splash-loader"><div class="splash-bar"></div></div>
-  <div class="splash-status" id="splash-status">Initializing...</div>
+  <div class="splash-status" id="splash-status">Installing app shell...</div>
 </div>
 
 <!-- ────── MODALS ────── -->
