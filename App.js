@@ -33,6 +33,16 @@ async function flushPendingQueue() {
   return flushQueue();
 }
 
+const { TAGLINES, DEFAULT_WORKOUTS, EXERCISE_POOL: EX_POOL } = window.FITOPRO_DATA;
+const {
+  getTotalSessions,
+  getTotalCalories,
+  getTotalMinutes,
+  getStreak,
+  getWeeklyCount,
+  getWeeklyActivity,
+} = window.FITOPRO_STATS;
+
 async function ensureProfileRecord(user, fallbackName = '') {
   if (!user?.id) return;
 
@@ -202,194 +212,8 @@ window.handleAuthHeaderBtn = () => {
 // Shared persistence helpers are wired above.
 
 // ════════════════════════════════════════
-//  COMPUTED STATS
-// ════════════════════════════════════════
-function getTotalSessions() { return state.sessions.filter(s => s.status === 'completed').length; }
-function getTotalCalories() { return state.sessions.reduce((s, h) => s + (h.calories_burned || h.kcal || 0), 0); }
-function getTotalMinutes() { return Math.round(state.sessions.reduce((s, h) => s + ((h.duration_seconds || 0) / 60), 0)); }
-
-function getStreak() {
-  const history = state.sessions.filter(s => s.status === 'completed');
-  if (!history.length) return 0;
-  let streak = 0;
-  let check = new Date(); check.setHours(0,0,0,0);
-  for (let i = 0; i < 365; i++) {
-    const has = history.some(h => {
-      const d = new Date(h.started_at || h.date); d.setHours(0,0,0,0);
-      return d.getTime() === check.getTime();
-    });
-    if (has) { streak++; check.setDate(check.getDate()-1); }
-    else if (i === 0) { check.setDate(check.getDate()-1); } // skip today if no workout
-    else break;
-  }
-  return streak;
-}
-
-function getWeeklyCount() {
-  const now = new Date(); const weekStart = new Date(now);
-  weekStart.setDate(weekStart.getDate() - weekStart.getDay()); weekStart.setHours(0,0,0,0);
-  return state.sessions.filter(s => {
-    const d = new Date(s.started_at || s.date);
-    return d >= weekStart && s.status === 'completed';
-  }).length;
-}
-
-function getWeeklyActivity() {
-  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const counts = new Array(7).fill(0);
-  const cals = new Array(7).fill(0);
-  const now = new Date();
-  state.sessions.filter(s => s.status === 'completed').forEach(s => {
-    const d = new Date(s.started_at || s.date);
-    const diff = Math.floor((now - d) / 86400000);
-    if (diff < 7) { counts[d.getDay()]++; cals[d.getDay()] += (s.calories_burned || s.kcal || 0); }
-  });
-  const today = now.getDay();
-  const labels = [], sessData = [], calData = [];
-  for (let i = 6; i >= 0; i--) {
-    const idx = (today - i + 7) % 7;
-    labels.push(days[idx]); sessData.push(counts[idx]); calData.push(cals[idx]);
-  }
-  return { labels, sessData, calData };
-}
-
-// ════════════════════════════════════════
 //  UI UTILITIES
 // ════════════════════════════════════════
-let toastTimer = null;
-function showToast(msg, type='') {
-  const t = document.getElementById('toast');
-  if (!t) return;
-  t.textContent = msg; t.className = 'toast'; if (type) t.classList.add(type);
-  t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
-}
-window.showToast = showToast;
-
-function openModal(id) {
-  const el = document.getElementById(id); if (!el) return;
-  el.style.display = 'flex'; requestAnimationFrame(() => el.classList.add('open'));
-}
-function closeModal(id) {
-  const el = document.getElementById(id); if (!el) return;
-  el.classList.remove('open');
-  setTimeout(() => { if (!el.classList.contains('open')) el.style.display = 'none'; }, 320);
-}
-window.openModal = openModal; window.closeModal = closeModal;
-
-document.querySelectorAll('.overlay').forEach(o => {
-  o.style.display = 'none';
-  o.addEventListener('click', e => { if (e.target === o) closeModal(o.id); });
-});
-
-function navTo(page) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-' + page)?.classList.add('active');
-  document.getElementById('nav-' + page)?.classList.add('active');
-  document.getElementById('scroll-area').scrollTop = 0;
-  if (page === 'stats') { setTimeout(renderCharts, 80); renderStats(); }
-  if (page === 'home') updateHomeUI();
-  if (page === 'profile') renderProfilePage();
-}
-window.navTo = navTo;
-
-function showLoading(msg='Loading...', pct=0) {
-  const o = document.getElementById('loading-overlay');
-  if (o) { o.style.display='flex'; requestAnimationFrame(() => o.classList.add('active')); }
-  const m = document.getElementById('loading-msg'); if (m) m.textContent = msg;
-  const b = document.getElementById('loading-bar-fill'); if (b) b.style.width = pct+'%';
-}
-function hideLoading(delay=0) {
-  setTimeout(() => {
-    const o = document.getElementById('loading-overlay'); if (!o) return;
-    o.classList.remove('active');
-    setTimeout(() => { o.style.display='none'; }, 320);
-  }, delay);
-}
-window.showLoading = showLoading; window.hideLoading = hideLoading;
-
-function showConfirm(title, msg, cb) {
-  document.getElementById('confirm-title').textContent = title;
-  document.getElementById('confirm-msg').textContent = msg;
-  document.getElementById('confirm-yes').onclick = () => { closeModal('confirm-modal'); cb(); };
-  openModal('confirm-modal');
-}
-
-function setSyncStatus(status, label) {
-  const dot = document.getElementById('sync-dot'); const lbl = document.getElementById('sync-label');
-  if (dot) dot.className = 'sync-dot' + (status === 'online' ? '' : status === 'syncing' ? ' syncing' : ' offline');
-  if (lbl) lbl.textContent = label;
-}
-function showSyncBanner(msg) {
-  const b = document.getElementById('sync-banner'); const m = document.getElementById('sync-banner-msg');
-  if (b) b.style.display = 'flex'; if (m) m.textContent = msg;
-}
-function hideSyncBanner() { const b = document.getElementById('sync-banner'); if (b) b.style.display = 'none'; }
-
-function haptic(p=[10]) { if (state.profile?.settings?.haptic && 'vibrate' in navigator) navigator.vibrate(p); }
-
-function timeAgo(dateStr) {
-  const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
-  if (diff < 60) return 'just now';
-  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
-  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
-  const days = Math.floor(diff/86400);
-  if (days === 1) return 'yesterday';
-  if (days < 7) return days + ' days ago';
-  return new Date(dateStr).toLocaleDateString('en', {month:'short', day:'numeric'});
-}
-
-function fmtDuration(secs) { const m = Math.floor(secs/60); const s = secs%60; return s > 0 ? `${m}m ${s}s` : `${m}m`; }
-
-function getGreeting() {
-  const h = new Date().getHours();
-  if (h < 12) return 'GOOD MORNING'; if (h < 17) return 'GOOD AFTERNOON'; return 'GOOD EVENING';
-}
-const taglines = ['crush it','grind harder','push limits','get stronger','stay consistent','break records','level up','go hard'];
-
-// ════════════════════════════════════════
-//  DEFAULT WORKOUTS
-// ════════════════════════════════════════
-const DEFAULT_WORKOUTS = [
-  { id:'d1', name:'Push Day A', icon:'💪', description:'Chest · Shoulders · Triceps', exercises:[
-    {name:'Bench Press',icon:'🏋️',sets:4,reps:8,rest:120,weight:60},
-    {name:'Incline DB Press',icon:'💪',sets:4,reps:12,rest:75,weight:24},
-    {name:'Cable Fly',icon:'🔄',sets:3,reps:15,rest:60,weight:15},
-    {name:'Shoulder Press',icon:'🏋️',sets:4,reps:10,rest:90,weight:40},
-    {name:'Lateral Raise',icon:'🦾',sets:3,reps:15,rest:45,weight:10},
-    {name:'Tricep Dips',icon:'💥',sets:3,reps:12,rest:60,weight:0},
-  ]},
-  { id:'d2', name:'Pull Day B', icon:'🤸', description:'Back · Biceps · Rear Delts', exercises:[
-    {name:'Pull-ups',icon:'🤸',sets:4,reps:8,rest:90,weight:0},
-    {name:'Barbell Row',icon:'🏋️',sets:4,reps:10,rest:90,weight:60},
-    {name:'Lat Pulldown',icon:'🔄',sets:3,reps:12,rest:75,weight:50},
-    {name:'Face Pull',icon:'🔄',sets:3,reps:15,rest:60,weight:15},
-    {name:'Hammer Curl',icon:'💪',sets:3,reps:12,rest:60,weight:16},
-  ]},
-  { id:'d3', name:'Leg Day', icon:'🦵', description:'Quads · Glutes · Hamstrings', exercises:[
-    {name:'Barbell Squat',icon:'🦵',sets:5,reps:8,rest:120,weight:80},
-    {name:'Romanian Deadlift',icon:'🏋️',sets:4,reps:10,rest:90,weight:70},
-    {name:'Leg Press',icon:'💺',sets:4,reps:12,rest:75,weight:100},
-    {name:'Walking Lunge',icon:'🦵',sets:3,reps:20,rest:60,weight:20},
-    {name:'Calf Raise',icon:'⬆️',sets:4,reps:20,rest:45,weight:40},
-  ]},
-  { id:'d4', name:'HIIT Cardio', icon:'🔥', description:'Fat Burn · No Equipment', exercises:[
-    {name:'Burpees',icon:'🔥',sets:4,reps:15,rest:30,weight:0},
-    {name:'Jump Squats',icon:'⚡',sets:4,reps:20,rest:30,weight:0},
-    {name:'Mountain Climbers',icon:'🏔️',sets:3,reps:30,rest:30,weight:0},
-    {name:'High Knees',icon:'🦵',sets:3,reps:40,rest:30,weight:0},
-  ]},
-  { id:'d5', name:'Push-Up Power', icon:'🤸', description:'Bodyweight · No Equipment', exercises:[
-    {name:'Push-Ups',icon:'🤸',sets:4,reps:20,rest:60,weight:0},
-    {name:'Wide Push-Ups',icon:'🤸',sets:3,reps:15,rest:60,weight:0},
-    {name:'Diamond Push-Ups',icon:'💎',sets:3,reps:12,rest:75,weight:0},
-    {name:'Pike Push-Ups',icon:'⬆️',sets:3,reps:10,rest:75,weight:0},
-  ]},
-];
-
-const EX_POOL = ['Bench Press','Squat','Deadlift','Pull-ups','Push-ups','Shoulder Press','Bicep Curl','Tricep Extension','Leg Press','Leg Curl','Calf Raise','Lat Pulldown','Cable Row','Dumbbell Fly','Incline Press','Romanian Deadlift','Barbell Row','Face Pull','Lateral Raise','Hammer Curl','Hip Thrust','Bulgarian Split Squat','Arnold Press','Upright Row','Close Grip Bench','Overhead Press','Skull Crusher','Cable Crunch','Plank','Russian Twist'];
 
 function getAllWorkouts() {
   return [...DEFAULT_WORKOUTS, ...state.workouts.map(w => ({ ...w, isCustom: true }))];
@@ -409,7 +233,7 @@ function updateHomeUI() {
 
   const $ = id => document.getElementById(id);
   if ($('h-greeting')) $('h-greeting').textContent = `${getGreeting()}, ${name.split(' ')[0].toUpperCase()} 👋`;
-  if ($('h-tagline')) $('h-tagline').textContent = taglines[Math.floor(Math.random()*taglines.length)];
+  if ($('h-tagline')) $('h-tagline').textContent = TAGLINES[Math.floor(Math.random() * TAGLINES.length)];
   if ($('h-sessions')) $('h-sessions').textContent = sessions;
   if ($('h-streak')) $('h-streak').textContent = streak + '🔥';
   if ($('h-kcal')) $('h-kcal').textContent = kcal.toLocaleString();
