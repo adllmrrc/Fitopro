@@ -5,16 +5,17 @@ FitoPro is a static fitness tracker app built with plain HTML, CSS, and browser-
 ## Project structure
 
 - `index.html`: main app shell
-- `Styles.css`: UI styling
-- `App.js`: primary feature wiring and app flow
-- `appUi.js`: shared modal, toast, loading, and navigation helpers
-- `appData.js`: default workouts and static exercise data
-- `config.js`: client-safe public app configuration
-- `state.js`: local app state and persistence helpers
-- `supabaseClient.js`: Supabase client bootstrap
-- `sync.js`: offline queue syncing
-- `dataLoader.js`: cloud-to-local loading helpers
-- `dataService.js`: local/cloud mutation helpers
+- `css/styles.css`: UI styling
+- `js/app/App.js`: primary feature wiring and app flow
+- `js/app/appUi.js`: shared modal, toast, loading, and navigation helpers
+- `js/app/appData.js`: default workouts and static exercise data
+- `js/app/appStats.js`: computed stats helpers
+- `js/core/config.js`: client-safe public app configuration
+- `js/core/state.js`: local app state and persistence helpers
+- `js/core/supabaseClient.js`: Supabase client bootstrap
+- `js/core/sync.js`: offline queue syncing
+- `js/core/dataLoader.js`: cloud-to-local loading helpers
+- `js/core/dataService.js`: local/cloud mutation helpers
 - `vendor/supabase.js`: local copy of Supabase browser client
 - `supabase/schema.sql`: clean install schema for Supabase
 
@@ -33,11 +34,11 @@ Options:
 1. Create a Supabase project.
 2. Open SQL Editor.
 3. Run `supabase/schema.sql`.
-4. Update `config.js` with your project URL and public anon key.
+4. Update `js/core/config.js` with your project URL and public anon key.
 
 Important:
 
-- Only public anon keys belong in `config.js`.
+- Only public anon keys belong in `js/core/config.js`.
 - Never commit a service role key to the repo.
 
 ## Deployment
