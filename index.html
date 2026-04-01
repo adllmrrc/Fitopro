@@ -72,6 +72,9 @@
     </div>
     <div class="inp-group"><div class="inp-lbl">Email</div><input class="inp" type="email" id="auth-email" placeholder="you@example.com" autocomplete="email"></div>
     <div class="inp-group"><div class="inp-lbl">Password</div><input class="inp" type="password" id="auth-password" placeholder="At least 6 characters" autocomplete="current-password"></div>
+    <div class="auth-inline-action">
+      <button class="auth-text-btn" type="button" onclick="handleForgotPassword()">Forgot password?</button>
+    </div>
     <div id="auth-error" style="color:var(--red);font-size:13px;font-weight:600;margin-bottom:10px;display:none;padding:10px 12px;background:rgba(255,59,92,.1);border-radius:10px;border:1px solid rgba(255,59,92,.25)"></div>
     <div class="auth-actions">
       <button class="btn-primary" id="auth-submit" onclick="handleAuthSubmit()"><span id="auth-btn-text">Sign In</span></button>

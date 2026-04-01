@@ -13,6 +13,10 @@ let authMode = 'login';
 // Global auth listener moved to after all vars defined
 let appReady = false;
 
+function getAppPageUrl(path) {
+  return new URL(path, window.location.href).href;
+}
+
 async function saveSession(session) {
   return addSession(session);
 }
@@ -161,7 +165,14 @@ window.handleAuthSubmit = async () => {
   showLoading(authMode === 'login' ? 'Signing in...' : 'Creating account...');
   try {
     if (authMode === 'register') {
-      const { data, error } = await sb.auth.signUp({ email, password, options: { data: { name, display_name: name } } });
+      const { data, error } = await sb.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { name, display_name: name },
+          emailRedirectTo: getAppPageUrl('./auth/confirm/'),
+        },
+      });
       if (error) throw error;
       await saveProfile({
         display_name: name,
@@ -186,6 +197,27 @@ window.handleAuthSubmit = async () => {
     hideLoading();
     showAuthError(getFriendlyAuthError(err, authMode));
   } finally { btn.disabled = false; }
+};
+
+window.handleForgotPassword = async () => {
+  const email = document.getElementById('auth-email').value.trim();
+  if (!email) {
+    showAuthError('Enter your email first, then tap Forgot password.');
+    return;
+  }
+
+  try {
+    showLoading('Sending reset email...');
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: getAppPageUrl('./auth/reset-password/'),
+    });
+    if (error) throw error;
+    hideLoading();
+    showToast('📩 Password reset link sent. Check your email.', 'success');
+  } catch (err) {
+    hideLoading();
+    showAuthError(getFriendlyAuthError(err, 'login'));
+  }
 };
 
 function showAuthError(msg) {

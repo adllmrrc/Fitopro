@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0d1728">
+  <title>Confirm Email | FitoPro</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="../../assets/icons/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="../../assets/icons/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #050508;
+      --surface: #11131a;
+      --surface-2: #171a22;
+      --border: rgba(255,255,255,.08);
+      --text: #f2f2ff;
+      --muted: rgba(242,242,255,.68);
+      --green: #39ff14;
+      --green-2: #2bcc10;
+      --blue: #00b4ff;
+      --danger: #ff5370;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Outfit', sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(57,255,20,.13), transparent 28%),
+        radial-gradient(circle at bottom left, rgba(0,180,255,.12), transparent 30%),
+        var(--bg);
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+    .card {
+      width: min(100%, 460px);
+      background: linear-gradient(180deg, rgba(23,26,34,.96), rgba(13,15,21,.98));
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      padding: 28px;
+      box-shadow: 0 24px 60px rgba(0,0,0,.35);
+    }
+    .brand {
+      font-size: 14px;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 16px;
+      font-weight: 700;
+    }
+    .icon {
+      width: 68px;
+      height: 68px;
+      border-radius: 20px;
+      display: grid;
+      place-items: center;
+      font-size: 32px;
+      background: linear-gradient(135deg, rgba(57,255,20,.22), rgba(0,180,255,.2));
+      border: 1px solid rgba(57,255,20,.22);
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(28px, 6vw, 38px);
+      line-height: 1.05;
+      letter-spacing: -.03em;
+    }
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 15px;
+    }
+    .status {
+      margin-top: 22px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    .status.success {
+      border-color: rgba(57,255,20,.24);
+      background: rgba(57,255,20,.08);
+    }
+    .status.error {
+      border-color: rgba(255,83,112,.22);
+      background: rgba(255,83,112,.08);
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 22px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      appearance: none;
+      border: none;
+      border-radius: 16px;
+      padding: 14px 18px;
+      font: 700 15px 'Outfit', sans-serif;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform .15s ease, opacity .15s ease;
+    }
+    .btn:hover { opacity: .92; }
+    .btn:active { transform: scale(.98); }
+    .btn-primary {
+      color: #081008;
+      background: linear-gradient(135deg, var(--green), var(--green-2));
+      box-shadow: 0 10px 26px rgba(57,255,20,.22);
+    }
+    .btn-secondary {
+      color: var(--text);
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+    }
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,.18);
+      border-top-color: var(--green);
+      display: inline-block;
+      vertical-align: -3px;
+      margin-right: 10px;
+      animation: spin .85s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+  <script defer src="../../vendor/supabase.js"></script>
+  <script defer src="../../js/core/config.js"></script>
+  <script defer src="../../js/core/supabaseClient.js"></script>
+  <script defer src="../../js/core/authPages.js"></script>
+</head>
+<body>
+  <main class="card">
+    <div class="brand">FitoPro</div>
+    <div class="icon">✉️</div>
+    <h1>Confirming your account</h1>
+    <p>We’re validating your email so your workouts, progress, and profile can sync securely.</p>
+    <div class="status" id="status"><span class="spinner"></span>Checking your confirmation link...</div>
+    <div class="actions">
+      <a class="btn btn-primary" id="open-app" href="../../index.html" style="display:none;">Open FitoPro</a>
+      <a class="btn btn-secondary" href="../../index.html">Back to app</a>
+    </div>
+  </main>
+
+  <script>
+    window.addEventListener('load', async () => {
+      const status = document.getElementById('status');
+      const openApp = document.getElementById('open-app');
+
+      try {
+        await window.FITOPRO_AUTH_PAGES.establishSessionFromUrl({ fallbackType: 'email' });
+        status.className = 'status success';
+        status.textContent = 'Your email is confirmed. You can jump back into FitoPro now.';
+        openApp.href = window.FITOPRO_AUTH_PAGES.getAppHomeUrl();
+        openApp.style.display = 'inline-flex';
+        setTimeout(() => {
+          window.location.href = window.FITOPRO_AUTH_PAGES.getAppHomeUrl();
+        }, 2200);
+      } catch (error) {
+        status.className = 'status error';
+        status.textContent = window.FITOPRO_AUTH_PAGES.buildFriendlyAuthMessage(error);
+      }
+    });
+  </script>
+</body>
+</html>
