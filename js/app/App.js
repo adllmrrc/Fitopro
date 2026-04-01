@@ -33,7 +33,13 @@ async function flushPendingQueue() {
   return flushQueue();
 }
 
-const { TAGLINES, DEFAULT_WORKOUTS, EXERCISE_POOL: EX_POOL } = window.FITOPRO_DATA;
+const {
+  TAGLINES,
+  DEFAULT_WORKOUTS,
+  EXERCISE_LIBRARY,
+  EXERCISE_LOOKUP,
+  EXERCISE_POOL: EX_POOL
+} = window.FITOPRO_DATA;
 const {
   getTotalSessions,
   getTotalCalories,
@@ -237,15 +243,35 @@ function updateHomeUI() {
   if ($('h-sessions')) $('h-sessions').textContent = sessions;
   if ($('h-streak')) $('h-streak').textContent = streak + '🔥';
   if ($('h-kcal')) $('h-kcal').textContent = kcal.toLocaleString();
+  if ($('h-goal')) $('h-goal').textContent = `${Math.min(100, Math.round((weekly / goal) * 100))}%`;
 
   const lastS = state.sessions[0];
   if (lastS && $('last-workout-hint')) $('last-workout-hint').textContent = `Last: ${lastS.workout_name} · ${timeAgo(lastS.started_at || lastS.date)}`;
+  else if ($('last-workout-hint')) $('last-workout-hint').textContent = 'Choose a plan and start moving';
+
+  if ($('h-start-meta')) $('h-start-meta').textContent = weekly >= goal ? 'Goal smashed' : `${Math.max(goal - weekly, 0)} sessions left`;
+  if ($('h-summary')) $('h-summary').textContent = streak >= 3 ? `You are on a ${streak}-day streak. Keep the momentum alive.` : `Your next session starts with one tap. Build consistency one workout at a time.`;
+
+  const focusTitle = weekly >= goal ? 'Goal achieved' : streak >= 3 ? 'Protect the streak' : weekly === 0 ? 'Open strong this week' : 'One more step today';
+  const focusSub = weekly >= goal
+    ? 'You hit your weekly target. Stack a bonus session or focus on recovery.'
+    : streak >= 3
+      ? `You have ${streak} days in a row. A focused session keeps the fire going.`
+      : weekly === 0
+        ? 'Start the week with a clean session and set the tone early.'
+        : `${Math.max(goal - weekly, 0)} sessions remain to hit your target this week.`;
+  const focusChip = weekly >= goal ? 'Achieved' : streak >= 3 ? 'On Fire' : 'Momentum';
+  if ($('h-focus-title')) $('h-focus-title').textContent = focusTitle;
+  if ($('h-focus-sub')) $('h-focus-sub').textContent = focusSub;
+  if ($('h-focus-chip')) $('h-focus-chip').textContent = focusChip;
 
   const pct = Math.min(100, Math.round((weekly / goal) * 100));
   if ($('goal-bar')) $('goal-bar').style.width = pct + '%';
   if ($('goal-pill')) $('goal-pill').textContent = `${weekly} / ${goal}`;
   if ($('goal-msg')) $('goal-msg').textContent = weekly >= goal ? '🎉 Goal achieved!' : weekly === goal-1 ? '1 more session to go!' : `${goal - weekly} sessions left`;
   if ($('goal-target')) $('goal-target').textContent = `Goal: ${goal}/week`;
+  if ($('h-workout-total')) $('h-workout-total').textContent = `${getAllWorkouts().length} plans`;
+  if ($('h-workouts-copy')) $('h-workouts-copy').textContent = state.workouts.length ? 'Custom plans and built-ins, ready to launch.' : 'Your saved training plans will show up here.';
 
   renderWorkoutList();
 }
@@ -255,17 +281,21 @@ function renderWorkoutList() {
   const all = getAllWorkouts();
   if (!all.length) { list.innerHTML = '<div class="empty-state"><div class="empty-icon">🏋️</div><div class="empty-title">No workouts</div><div class="empty-sub">Create your first plan</div></div>'; return; }
   list.innerHTML = all.map((w,i) => `
-    <div class="w-row" onclick="startWorkout(${i})" data-idx="${i}">
+    <div class="w-row premium" onclick="startWorkout(${i})" data-idx="${i}">
       <div class="w-icon">${w.icon||'🏋️'}</div>
       <div class="w-info">
-        <div class="w-name">${w.name}</div>
+        <div class="w-topline">
+          <div class="w-name">${w.name}</div>
+          ${w.isCustom ? '<span class="tag b">Custom</span>' : '<span class="tag g">Built-in</span>'}
+        </div>
+        <div class="w-preview">${w.exercises?.[0]?.name || 'Ready to train'}${w.exercises?.length > 1 ? ` +${w.exercises.length - 1} more` : ''}</div>
         <div class="w-meta">
           <span class="tag g">${w.exercises?.length||0} exercises</span>
+          <span class="tag o">${Math.max(8, (w.exercises?.reduce((sum, ex) => sum + ((ex.sets || 3) * ((ex.rest || 60) + 45)), 0) || 0) / 60 | 0)} min</span>
           ${w.description ? `<span class="tag">${w.description}</span>` : ''}
-          ${w.isCustom ? '<span class="tag b">Custom</span>' : ''}
         </div>
       </div>
-      ${w.isCustom ? `<button onclick="event.stopPropagation();confirmDeleteWorkout('${w.id}')" class="w-action-btn" style="background:none;border:none;font-size:16px;cursor:pointer;padding:4px 8px;color:var(--t3)">🗑️</button>` : ''}
+      ${w.isCustom ? `<button onclick="event.stopPropagation();confirmDeleteWorkout('${w.id}')" class="w-action-btn premium">🗑️</button>` : ''}
       <div class="w-arrow">›</div>
     </div>
   `).join('');
@@ -286,10 +316,14 @@ window.openPickModal = () => {
   const all = getAllWorkouts(); window._allWorkouts = all;
   const list = document.getElementById('pick-list'); if (!list) return;
   list.innerHTML = all.map((w,i) => `
-    <div class="w-row" onclick="pickWorkout(${i})" style="cursor:pointer">
+    <div class="w-row premium" onclick="pickWorkout(${i})" style="cursor:pointer">
       <div class="w-icon">${w.icon||'🏋️'}</div>
       <div class="w-info">
-        <div class="w-name">${w.name}</div>
+        <div class="w-topline">
+          <div class="w-name">${w.name}</div>
+          ${w.isCustom ? '<span class="tag b">Custom</span>' : '<span class="tag g">Built-in</span>'}
+        </div>
+        <div class="w-preview">${w.exercises?.[0]?.name || 'Ready to train'}${w.exercises?.length > 1 ? ` +${w.exercises.length - 1} more` : ''}</div>
         <div class="w-meta">
           <span class="tag">${w.exercises?.length||0} exercises</span>
           ${w.description ? `<span class="tag g">${w.description}</span>` : ''}
@@ -306,6 +340,198 @@ window.pickWorkout = (i) => {
   setTimeout(() => startWorkout(i), 220);
 };
 
+function getExerciseOptionsMarkup(selectedName = '', searchTerm = '') {
+  const query = searchTerm.trim().toLowerCase();
+  const groups = EXERCISE_LIBRARY.map(group => {
+    const matches = group.exercises.filter(name => !query || name.toLowerCase().includes(query));
+    if (!matches.length) return '';
+    return `
+    <optgroup label="${group.label}">
+      ${matches.map(name => `<option value="${name}" ${name === selectedName ? 'selected' : ''}>${name}</option>`).join('')}
+    </optgroup>
+  `;
+  }).filter(Boolean);
+
+  if (!groups.length) {
+    return '<option value="">No matching exercises</option>';
+  }
+
+  return groups.join('');
+}
+
+function setTimerPlayButton(running) {
+  const button = document.getElementById('t-play-btn');
+  if (!button) return;
+  button.innerHTML = running ? '⏸<span>Pause</span>' : '▶<span>Play</span>';
+}
+
+function findExerciseByName(name = '') {
+  const normalized = name.trim().toLowerCase();
+  if (!normalized) return null;
+  return EX_POOL.find(exercise => exercise.toLowerCase() === normalized) || null;
+}
+
+function getExercisePreset(name = '') {
+  return EXERCISE_LOOKUP[name] || {
+    name: name || 'Exercise',
+    category: 'Custom',
+    icon: '🏋️',
+    sets: 3,
+    reps: 12,
+    rest: 60,
+    weight: 0,
+  };
+}
+
+function updateBuilderSummary() {
+  const rows = Array.from(document.querySelectorAll('#ex-list .ex-row'));
+  const exerciseCount = rows.length;
+  const totalSets = rows.reduce((sum, row) => sum + (parseInt(row.querySelector('[data-field=sets]')?.value, 10) || 0), 0);
+  const totalRest = rows.reduce((sum, row) => sum + (parseInt(row.querySelector('[data-field=rest]')?.value, 10) || 0), 0);
+  const estimatedMinutes = Math.max(0, Math.round(((totalSets * 45) + totalRest) / 60));
+  const countEl = document.getElementById('builder-count');
+  const setsEl = document.getElementById('builder-total-sets');
+  const timeEl = document.getElementById('builder-est-time');
+  if (countEl) countEl.textContent = String(exerciseCount);
+  if (setsEl) setsEl.textContent = String(totalSets);
+  if (timeEl) timeEl.textContent = `${estimatedMinutes}m`;
+}
+
+let draggedExerciseRow = null;
+let touchDraggedExerciseRow = null;
+
+function applyExercisePreset(row, exerciseName, syncSearch = true) {
+  const preset = getExercisePreset(exerciseName);
+  const iconEl = row.querySelector('.ex-ico');
+  const nameInput = row.querySelector('.ex-name-t');
+  const searchInput = row.querySelector('.ex-search-t');
+  const select = row.querySelector('.ex-preset');
+  const setsInput = row.querySelector('[data-field=sets]');
+  const repsInput = row.querySelector('[data-field=reps]');
+  const restInput = row.querySelector('[data-field=rest]');
+
+  if (iconEl) iconEl.textContent = preset.icon;
+  if (nameInput) nameInput.value = preset.name;
+  if (syncSearch && searchInput) searchInput.value = preset.name;
+  if (setsInput) setsInput.value = preset.sets;
+  if (repsInput) repsInput.value = preset.reps;
+  if (restInput) restInput.value = preset.rest;
+  row.dataset.exerciseName = preset.name;
+  row.dataset.exerciseIcon = preset.icon;
+
+  if (select) {
+    select.innerHTML = getExerciseOptionsMarkup(preset.name, searchInput?.value || preset.name);
+    if (select.querySelector(`option[value="${preset.name}"]`)) {
+      select.value = preset.name;
+    }
+  }
+  updateBuilderSummary();
+}
+
+function wireExerciseRow(row) {
+  const searchInput = row.querySelector('.ex-search-t');
+  const select = row.querySelector('.ex-preset');
+  const nameInput = row.querySelector('.ex-name-t');
+
+  searchInput?.addEventListener('input', (event) => {
+    const query = event.target.value.trim();
+    const currentValue = select?.value || row.dataset.exerciseName || '';
+    if (select) {
+      select.innerHTML = getExerciseOptionsMarkup(currentValue, query);
+      const firstOption = select.querySelector('option');
+      if (firstOption && firstOption.value) {
+        select.value = firstOption.value;
+      }
+    }
+
+    const exactMatch = findExerciseByName(query);
+    if (exactMatch) {
+      applyExercisePreset(row, exactMatch, false);
+    } else if (nameInput) {
+      nameInput.value = query;
+      row.dataset.exerciseName = query;
+      row.dataset.exerciseIcon = '🏋️';
+      const iconEl = row.querySelector('.ex-ico');
+      if (iconEl) iconEl.textContent = '🏋️';
+      updateBuilderSummary();
+    }
+  });
+
+  select?.addEventListener('change', (event) => {
+    if (!event.target.value) return;
+    applyExercisePreset(row, event.target.value);
+  });
+
+  nameInput?.addEventListener('input', (event) => {
+    const value = event.target.value.trim();
+    const exactMatch = findExerciseByName(value);
+    if (exactMatch) {
+      applyExercisePreset(row, exactMatch);
+      return;
+    }
+
+    row.dataset.exerciseName = value;
+    row.dataset.exerciseIcon = '🏋️';
+    const iconEl = row.querySelector('.ex-ico');
+    if (iconEl) iconEl.textContent = '🏋️';
+    updateBuilderSummary();
+  });
+
+  row.querySelectorAll('[data-field=sets],[data-field=reps],[data-field=rest]').forEach((input) => {
+    input.addEventListener('input', updateBuilderSummary);
+  });
+
+  const handle = row.querySelector('.ex-drag');
+  row.draggable = true;
+  handle?.addEventListener('mousedown', () => row.classList.add('drag-armed'));
+  handle?.addEventListener('mouseup', () => row.classList.remove('drag-armed'));
+  row.addEventListener('dragstart', () => {
+    draggedExerciseRow = row;
+    row.classList.add('dragging');
+  });
+  row.addEventListener('dragend', () => {
+    row.classList.remove('dragging', 'drag-armed');
+    draggedExerciseRow = null;
+    updateBuilderSummary();
+  });
+  row.addEventListener('dragover', (event) => {
+    event.preventDefault();
+    if (!draggedExerciseRow || draggedExerciseRow === row) return;
+    const rect = row.getBoundingClientRect();
+    const insertAfter = event.clientY > rect.top + rect.height / 2;
+    const parent = row.parentElement;
+    if (!parent) return;
+    if (insertAfter) parent.insertBefore(draggedExerciseRow, row.nextSibling);
+    else parent.insertBefore(draggedExerciseRow, row);
+  });
+
+  handle?.addEventListener('touchstart', () => {
+    touchDraggedExerciseRow = row;
+    row.classList.add('dragging', 'drag-armed');
+  }, { passive: true });
+
+  handle?.addEventListener('touchmove', (event) => {
+    if (!touchDraggedExerciseRow) return;
+    const touch = event.touches[0];
+    if (!touch) return;
+    const target = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.ex-row');
+    if (!target || target === touchDraggedExerciseRow) return;
+    const rect = target.getBoundingClientRect();
+    const insertAfter = touch.clientY > rect.top + rect.height / 2;
+    const parent = target.parentElement;
+    if (!parent) return;
+    if (insertAfter) parent.insertBefore(touchDraggedExerciseRow, target.nextSibling);
+    else parent.insertBefore(touchDraggedExerciseRow, target);
+    event.preventDefault();
+  }, { passive: false });
+
+  handle?.addEventListener('touchend', () => {
+    row.classList.remove('dragging', 'drag-armed');
+    touchDraggedExerciseRow = null;
+    updateBuilderSummary();
+  });
+}
+
 let selectedIcon = '💪';
 document.getElementById('icon-picker')?.addEventListener('click', e => {
   const opt = e.target.closest('.icon-opt'); if (!opt) return;
@@ -316,21 +542,34 @@ document.getElementById('icon-picker')?.addEventListener('click', e => {
 window.addExToList = () => {
   const list = document.getElementById('ex-list'); if (!list) return;
   const name = EX_POOL[Math.floor(Math.random()*EX_POOL.length)];
+  const preset = getExercisePreset(name);
   const d = document.createElement('div'); d.className = 'ex-row';
   d.innerHTML = `
-    <div class="ex-ico">🏋️</div>
+    <div class="ex-drag" title="Drag to reorder">⋮⋮</div>
+    <div class="ex-ico">${preset.icon}</div>
     <div class="ex-info">
+      <input class="ex-search-t inp" type="text" value="${name}" placeholder="Search an exercise" style="margin-bottom:8px">
+      <select class="ex-preset inp" style="margin-bottom:8px">
+        ${getExerciseOptionsMarkup(name, name)}
+      </select>
       <input class="ex-name-t inp" type="text" value="${name}" placeholder="Exercise name" style="margin-bottom:8px">
       <div class="ex-meta-row">
-        <div><div style="font-size:9px;color:var(--t3);font-weight:700;margin-bottom:3px">SETS</div><input class="ex-meta-inp" type="number" value="3" min="1" max="20" data-field="sets"></div>
-        <div><div style="font-size:9px;color:var(--t3);font-weight:700;margin-bottom:3px">REPS</div><input class="ex-meta-inp" type="number" value="12" min="1" max="100" data-field="reps"></div>
-        <div><div style="font-size:9px;color:var(--t3);font-weight:700;margin-bottom:3px">REST(s)</div><input class="ex-meta-inp" type="number" value="60" min="10" max="600" data-field="rest"></div>
+        <div><div style="font-size:9px;color:var(--t3);font-weight:700;margin-bottom:3px">SETS</div><input class="ex-meta-inp" type="number" value="${preset.sets}" min="1" max="20" data-field="sets"></div>
+        <div><div style="font-size:9px;color:var(--t3);font-weight:700;margin-bottom:3px">REPS / SEC</div><input class="ex-meta-inp" type="number" value="${preset.reps}" min="1" max="1000" data-field="reps"></div>
+        <div><div style="font-size:9px;color:var(--t3);font-weight:700;margin-bottom:3px">REST(s)</div><input class="ex-meta-inp" type="number" value="${preset.rest}" min="0" max="600" data-field="rest"></div>
       </div>
     </div>
-    <div class="ex-rm" onclick="this.closest('.ex-row').remove()">✕</div>
+    <div class="ex-rm" onclick="removeExerciseRow(this)">✕</div>
   `;
   list.appendChild(d);
+  wireExerciseRow(d);
+  applyExercisePreset(d, name);
   d.querySelector('.ex-name-t').focus();
+};
+
+window.removeExerciseRow = (button) => {
+  button.closest('.ex-row')?.remove();
+  updateBuilderSummary();
 };
 
 window.saveNewWorkout = async () => {
@@ -340,7 +579,7 @@ window.saveNewWorkout = async () => {
   if (!rows.length) { showToast('⚠️ Add at least one exercise'); return; }
   const exercises = Array.from(rows).map(row => ({
     name: row.querySelector('.ex-name-t')?.value?.trim() || 'Exercise',
-    icon: '🏋️',
+    icon: row.dataset.exerciseIcon || row.querySelector('.ex-ico')?.textContent?.trim() || '🏋️',
     sets: parseInt(row.querySelector('[data-field=sets]')?.value) || 3,
     reps: parseInt(row.querySelector('[data-field=reps]')?.value) || 12,
     rest: parseInt(row.querySelector('[data-field=rest]')?.value) || 60,
@@ -354,6 +593,7 @@ window.saveNewWorkout = async () => {
   document.getElementById('plan-name').value = '';
   document.getElementById('plan-desc').value = '';
   document.getElementById('ex-list').innerHTML = '';
+  updateBuilderSummary();
   closeModal('new-workout-modal');
   showToast('✅ ' + name + ' saved!', 'success');
   renderWorkoutList();
@@ -377,7 +617,8 @@ window.startWorkout = (idx) => {
   clearInterval(timerIv); clearInterval(elapsedIv); timerRunning = false;
   const $= id => document.getElementById(id);
   if ($('t-workout-name')) $('t-workout-name').textContent = w.name;
-  if ($('t-play-btn')) $('t-play-btn').textContent = '▶';
+  if ($('t-total-ex')) $('t-total-ex').textContent = String(w.exercises.length);
+  setTimerPlayButton(false);
   loadExercise(0);
   navTo('timer');
   showToast('🏋️ ' + w.name + ' started!');
@@ -404,17 +645,25 @@ function setPhase(phase, phaseColor, ringColor, exercise, sub, coach) {
   if ($('t-exercise')) $('t-exercise').textContent = exercise;
   if ($('t-sub')) $('t-sub').textContent = sub;
   if ($('t-coach')) $('t-coach').textContent = coach;
+  const timerPage = $('page-timer');
+  if (timerPage) timerPage.dataset.phase = phase.toLowerCase();
+  const burst = $('t-phase-burst');
+  if (burst) {
+    burst.className = 'timer-phase-burst';
+    void burst.offsetWidth;
+    burst.classList.add(phase.toLowerCase() === 'rest' ? 'rest' : 'work', 'show');
+  }
 }
 
 window.timerToggle = () => {
   if (timerRunning) {
     clearInterval(timerIv); timerRunning = false;
-    document.getElementById('t-play-btn').textContent = '▶';
+    setTimerPlayButton(false);
     document.getElementById('t-coach').textContent = 'Paused — tap ▶ to resume.';
   } else {
     timerRunning = true;
-    document.getElementById('t-play-btn').textContent = '⏸';
-    timerIv = setInterval(() => { secs--; if (secs <= 0) { clearInterval(timerIv); timerRunning = false; document.getElementById('t-play-btn').textContent = '▶'; autoNextPhase(); } updateTimerDisplay(); }, 1000);
+    setTimerPlayButton(true);
+    timerIv = setInterval(() => { secs--; if (secs <= 0) { clearInterval(timerIv); timerRunning = false; setTimerPlayButton(false); autoNextPhase(); } updateTimerDisplay(); }, 1000);
     const ex = curWorkout?.exercises[curExIdx];
     if (!isRest && ex) document.getElementById('t-coach').textContent = `Go! ${ex.reps} reps of ${ex.name}. Push hard!`;
     else document.getElementById('t-coach').textContent = 'Rest up. Breathe and recover.';
@@ -424,12 +673,12 @@ window.timerToggle = () => {
 
 window.timerReset = () => {
   clearInterval(timerIv); timerRunning = false; secs = totalSecs;
-  document.getElementById('t-play-btn').textContent = '▶';
+  setTimerPlayButton(false);
   document.getElementById('t-coach').textContent = 'Reset — tap ▶ to start.';
   updateTimerDisplay(); showToast('↩ Timer reset');
 };
 
-window.timerSkip = () => { clearInterval(timerIv); timerRunning = false; document.getElementById('t-play-btn').textContent = '▶'; autoNextPhase(); };
+window.timerSkip = () => { clearInterval(timerIv); timerRunning = false; setTimerPlayButton(false); autoNextPhase(); };
 
 function autoNextPhase(logEntry = null) {
   if (!curWorkout) return;
@@ -498,6 +747,11 @@ function updateSessionProgress() {
   const bar = document.getElementById('t-prog-bar'); if (bar) bar.style.width = pct+'%';
   const txt = document.getElementById('t-prog-pct'); if (txt) txt.textContent = pct+'%';
   const sets = document.getElementById('t-sets-done'); if (sets) sets.textContent = sessionSets.length+' sets';
+  const current = document.getElementById('t-current-ex'); if (current) current.textContent = String(Math.min(curExIdx + 1, curWorkout.exercises.length));
+  const progressCopy = document.getElementById('t-progress-copy');
+  if (progressCopy) progressCopy.textContent = isRest ? 'Recover, breathe, reset.' : 'Locked in and moving.';
+  const nextCount = document.getElementById('t-next-count');
+  if (nextCount) nextCount.textContent = `${Math.max(curWorkout.exercises.length - curExIdx - 1, 0)} left`;
 }
 
 function updateElapsed() {
@@ -539,7 +793,7 @@ window.confirmSet = async () => {
   closeModal('ex-focus-modal');
   clearInterval(timerIv);
   timerRunning = false;
-  document.getElementById('t-play-btn').textContent = '▶';
+  setTimerPlayButton(false);
   speak(`Great set! ${reps} reps logged.`); haptic([50,20,50]);
   autoNextPhase(logEntry);
 };
@@ -960,6 +1214,7 @@ async function initApp() {
   renderWorkoutList();
   renderProfilePage();
   updateAllUI();
+  updateBuilderSummary();
   checkAchievements();
   hideLoading();
   hideSplash();

@@ -119,9 +119,18 @@
 
 <!-- NEW WORKOUT MODAL -->
 <div class="overlay" id="new-workout-modal">
-  <div class="sheet">
+  <div class="sheet builder-sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">➕ Create Workout</div>
+    <div class="builder-hero">
+      <div class="builder-kicker">Custom Builder</div>
+      <div class="sheet-title">Create a clean, focused workout plan</div>
+      <div class="builder-copy">Build your session like a real program: choose the vibe, add exercises fast, then tune the work and rest blocks.</div>
+      <div class="builder-stats">
+        <div class="builder-stat"><span class="builder-stat-val" id="builder-count">0</span><span class="builder-stat-lbl">Exercises</span></div>
+        <div class="builder-stat"><span class="builder-stat-val" id="builder-total-sets">0</span><span class="builder-stat-lbl">Total Sets</span></div>
+        <div class="builder-stat"><span class="builder-stat-val" id="builder-est-time">0m</span><span class="builder-stat-lbl">Est. Time</span></div>
+      </div>
+    </div>
     <div class="inp-group"><div class="inp-lbl">Workout Name</div><input id="plan-name" class="inp" placeholder="e.g. Push Day Pro"></div>
     <div class="inp-group"><div class="inp-lbl">Description</div><input id="plan-desc" class="inp" placeholder="Chest, shoulders, triceps..."></div>
     <div class="inp-group"><div class="inp-lbl">Icon</div>
@@ -129,9 +138,14 @@
         <span class="icon-opt selected" data-icon="💪">💪</span><span class="icon-opt" data-icon="🏋️">🏋️</span><span class="icon-opt" data-icon="🦵">🦵</span><span class="icon-opt" data-icon="🤸">🤸</span><span class="icon-opt" data-icon="🔥">🔥</span><span class="icon-opt" data-icon="⚡">⚡</span><span class="icon-opt" data-icon="🎯">🎯</span><span class="icon-opt" data-icon="🏃">🏃</span><span class="icon-opt" data-icon="🧘">🧘</span><span class="icon-opt" data-icon="🚴">🚴</span>
       </div>
     </div>
-    <div class="sec-label">Exercises</div>
-    <div id="ex-list"></div>
-    <button class="btn-ghost btn-sm" onclick="addExToList()" style="margin-bottom:16px">➕ Add Exercise</button>
+    <div class="builder-section-head">
+      <div>
+        <div class="sec-label" style="margin:0 0 6px">Exercises</div>
+        <div class="builder-section-copy">Search by movement, pick a machine or bodyweight drill, then tweak the prescription if needed.</div>
+      </div>
+      <button class="btn-ghost btn-sm builder-add-btn" onclick="addExToList()">➕ Add Exercise</button>
+    </div>
+    <div class="builder-list" id="ex-list"></div>
     <div class="auth-actions">
       <button class="btn-primary" onclick="saveNewWorkout()">💾 Save Workout</button>
       <button class="btn-ghost" onclick="closeModal('new-workout-modal')">Cancel</button>
@@ -271,46 +285,77 @@
 <div id="page-home" class="page active">
   <div id="sync-banner" style="display:none" class="sync-banner">🔄 <span id="sync-banner-msg">Syncing your data...</span></div>
 
-  <div class="hero">
-    <div class="hero-greeting" id="h-greeting">GOOD MORNING, ATHLETE 👋</div>
-    <div class="hero-name">Ready to <em id="h-tagline">crush it</em>?</div>
-    <div class="hero-row">
-      <div class="hero-stat"><div class="hero-val green" id="h-sessions">0</div><div class="hero-lbl">Sessions</div></div>
-      <div class="hero-stat"><div class="hero-val blue" id="h-streak">0🔥</div><div class="hero-lbl">Streak</div></div>
-      <div class="hero-stat"><div class="hero-val orange" id="h-kcal">0</div><div class="hero-lbl">kcal</div></div>
+  <div class="home-hero">
+    <div class="home-hero-top">
+      <div>
+        <div class="hero-greeting" id="h-greeting">GOOD MORNING, ATHLETE 👋</div>
+        <div class="hero-name">Ready to <em id="h-tagline">crush it</em>?</div>
+        <div class="home-hero-copy" id="h-summary">Your next session starts with one tap.</div>
+      </div>
+      <div class="home-hero-badge" id="h-focus-chip">Momentum</div>
+    </div>
+    <div class="hero-row premium">
+      <div class="hero-stat premium"><div class="hero-val green" id="h-sessions">0</div><div class="hero-lbl">Sessions</div></div>
+      <div class="hero-stat premium"><div class="hero-val blue" id="h-streak">0🔥</div><div class="hero-lbl">Streak</div></div>
+      <div class="hero-stat premium"><div class="hero-val orange" id="h-kcal">0</div><div class="hero-lbl">kcal</div></div>
+      <div class="hero-stat premium"><div class="hero-val" id="h-goal">0%</div><div class="hero-lbl">Goal</div></div>
     </div>
   </div>
 
-  <button class="start-btn" onclick="openPickModal()">
+  <button class="start-btn premium" onclick="openPickModal()">
     <div class="start-btn-left">
+      <div class="start-btn-kicker">Quick Start</div>
       <div class="start-btn-title">Start Workout</div>
       <div class="start-btn-sub" id="last-workout-hint">Tap to choose a workout</div>
     </div>
-    <div class="start-btn-icon">▶️</div>
+    <div class="start-btn-right">
+      <div class="start-btn-mini" id="h-start-meta">Fresh plan</div>
+      <div class="start-btn-icon">▶️</div>
+    </div>
   </button>
 
-  <div class="goal-card">
-    <div class="goal-header"><div class="goal-title">🎯 Weekly Goal</div><div class="goal-pill" id="goal-pill">0 / 4</div></div>
-    <div class="goal-bar-wrap"><div class="goal-bar" id="goal-bar" style="width:0%"></div></div>
-    <div class="goal-footer"><span id="goal-msg">Keep going!</span><span id="goal-target">Goal: 4/week</span></div>
+  <div class="home-focus-grid">
+    <div class="home-focus-card">
+      <div class="home-focus-label">Today's Focus</div>
+      <div class="home-focus-title" id="h-focus-title">Stay consistent</div>
+      <div class="home-focus-sub" id="h-focus-sub">String together another strong session.</div>
+    </div>
+    <div class="goal-card premium">
+      <div class="goal-header"><div class="goal-title">🎯 Weekly Goal</div><div class="goal-pill" id="goal-pill">0 / 4</div></div>
+      <div class="goal-bar-wrap"><div class="goal-bar" id="goal-bar" style="width:0%"></div></div>
+      <div class="goal-footer"><span id="goal-msg">Keep going!</span><span id="goal-target">Goal: 4/week</span></div>
+    </div>
   </div>
 
-  <div class="q-grid">
-    <div class="q-btn" onclick="openModal('new-workout-modal')">
+  <div class="home-quick-head">
+    <div>
+      <div class="sec-label" style="margin:0 0 6px">Quick Actions</div>
+      <div class="home-quick-copy">Build a plan, review progress, or jump back into your routine fast.</div>
+    </div>
+  </div>
+
+  <div class="q-grid premium">
+    <div class="q-btn premium" onclick="openModal('new-workout-modal')">
       <div class="q-icon">➕</div><div class="q-title">New Plan</div><div class="q-sub">Build workout</div>
     </div>
-    <div class="q-btn" onclick="navTo('stats')">
+    <div class="q-btn premium" onclick="navTo('stats')">
       <div class="q-icon">📊</div><div class="q-title">My Stats</div><div class="q-sub">View progress</div>
     </div>
-    <div class="q-btn" onclick="navTo('profile')">
+    <div class="q-btn premium" onclick="navTo('profile')">
       <div class="q-icon">👤</div><div class="q-title">Profile</div><div class="q-sub">Settings & goals</div>
     </div>
-    <div class="q-btn" onclick="openModal('watch-modal')">
+    <div class="q-btn premium" onclick="openModal('watch-modal')">
       <div class="q-icon">❤️</div><div class="q-title">Heart Rate</div><div class="q-sub">Monitor BPM</div>
     </div>
   </div>
 
-  <div class="sec-label">My Workouts</div>
+  <div class="home-workouts-head">
+    <div>
+      <div class="sec-label" style="margin:0 0 6px">My Workouts</div>
+      <div class="home-quick-copy" id="h-workouts-copy">Your saved training plans live here.</div>
+    </div>
+    <div class="home-workouts-pill" id="h-workout-total">0 plans</div>
+  </div>
   <div id="workout-list"><div class="empty-state"><div class="empty-icon">🏋️</div><div class="empty-title">No workouts yet</div><div class="empty-sub">Tap "New Plan" to create your first custom workout</div></div></div>
 </div>
 
@@ -318,33 +363,56 @@
 <div id="page-timer" class="page">
   <div class="timer-wrap">
     <div class="timer-header">
-      <div class="timer-workout-name" id="t-workout-name">No workout loaded</div>
+      <div class="timer-head-copy">
+        <div class="timer-kicker">Live Session</div>
+        <div class="timer-workout-name" id="t-workout-name">No workout loaded</div>
+      </div>
       <button class="timer-end-btn" onclick="confirmEndWorkout()">End</button>
     </div>
 
-    <div class="bpm-widget">
-      <div class="bpm-heart">❤️</div>
-      <div><div class="bpm-val" id="t-bpm">--</div><div class="bpm-lbl">BPM</div></div>
-      <div id="t-bpm-zone" class="bpm-zone zone-rest">Rest</div>
+    <div class="timer-hero-card">
+      <div class="timer-topline">
+        <div class="timer-phase-pill" id="t-phase">READY</div>
+        <div class="bpm-widget compact">
+          <div class="bpm-heart">❤️</div>
+          <div><div class="bpm-val" id="t-bpm">--</div><div class="bpm-lbl">BPM</div></div>
+          <div id="t-bpm-zone" class="bpm-zone zone-rest">Rest</div>
+        </div>
+      </div>
+
+      <div class="ring-wrap">
+        <svg width="230" height="230" viewBox="0 0 230 230">
+          <circle class="ring-bg" cx="115" cy="115" r="110"/>
+          <circle class="ring-fg" id="t-ring" cx="115" cy="115" r="110"/>
+        </svg>
+        <div class="timer-phase-burst" id="t-phase-burst"></div>
+        <div class="ring-inner">
+          <div class="t-time" id="t-time">01:30</div>
+          <div class="t-set-label" id="t-set-label">Set 1 of 3</div>
+        </div>
+      </div>
+
+      <div class="t-exercise" id="t-exercise">Select a workout to begin</div>
+      <div class="t-sub" id="t-sub">Hit ▶ to start the timer</div>
+      <div class="t-coach" id="t-coach">Your AI coach is ready.</div>
+
+      <div class="t-dots" id="t-dots"></div>
     </div>
 
-    <div class="ring-wrap">
-      <svg width="230" height="230" viewBox="0 0 230 230">
-        <circle class="ring-bg" cx="115" cy="115" r="110"/>
-        <circle class="ring-fg" id="t-ring" cx="115" cy="115" r="110"/>
-      </svg>
-      <div class="ring-inner">
-        <div class="t-phase" id="t-phase">READY</div>
-        <div class="t-time" id="t-time">01:30</div>
-        <div class="t-set-label" id="t-set-label">Set 1 of 3</div>
+    <div class="timer-stat-grid">
+      <div class="timer-stat-card">
+        <div class="timer-stat-label">Elapsed</div>
+        <div class="timer-stat-value" id="t-elapsed">00:00 elapsed</div>
+      </div>
+      <div class="timer-stat-card">
+        <div class="timer-stat-label">Logged Sets</div>
+        <div class="timer-stat-value" id="t-sets-done">0 sets</div>
+      </div>
+      <div class="timer-stat-card">
+        <div class="timer-stat-label">Exercise</div>
+        <div class="timer-stat-value"><span id="t-current-ex">1</span> / <span id="t-total-ex">0</span></div>
       </div>
     </div>
-
-    <div class="t-exercise" id="t-exercise">Select a workout to begin</div>
-    <div class="t-sub" id="t-sub">Hit ▶ to start the timer</div>
-    <div class="t-coach" id="t-coach">Your AI coach is ready.</div>
-
-    <div class="t-dots" id="t-dots"></div>
 
     <div class="timer-controls">
       <div class="t-ctrl-btn" onclick="timerReset()">↩<span>Reset</span></div>
@@ -354,20 +422,22 @@
 
     <button class="log-set-btn" onclick="logSet()">💪 Log Set Manually</button>
 
-    <div class="card" style="width:100%">
-      <div style="display:flex;justify-content:space-between;margin-bottom:8px">
-        <div style="font-size:13px;font-weight:800;color:var(--t2)">Session Progress</div>
-        <div style="font-size:13px;font-weight:800;color:var(--g1)" id="t-prog-pct">0%</div>
+    <div class="timer-progress-card">
+      <div class="timer-progress-head">
+        <div class="timer-progress-title">Session Progress</div>
+        <div class="timer-progress-pct" id="t-prog-pct">0%</div>
       </div>
       <div class="goal-bar-wrap"><div class="goal-bar" id="t-prog-bar" style="width:0%"></div></div>
-      <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--t3);font-weight:600">
-        <span id="t-elapsed">00:00 elapsed</span>
-        <span id="t-sets-done">0 sets</span>
+      <div class="timer-progress-foot">
+        <span id="t-progress-copy">Locked in and moving.</span>
+        <span id="t-next-count">0 left</span>
       </div>
     </div>
 
-    <div class="t-next-label">Up Next</div>
-    <div id="t-next-list" style="width:100%"></div>
+    <div class="timer-next-card">
+      <div class="t-next-label">Up Next</div>
+      <div id="t-next-list" style="width:100%"></div>
+    </div>
   </div>
 </div>
 
