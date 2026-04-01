@@ -576,6 +576,16 @@
 </nav>
 
 <div id="toast"></div>
+<div id="pwa-update-banner" class="pwa-update-banner" style="display:none">
+  <div class="pwa-update-copy">
+    <div class="pwa-update-title">New version ready</div>
+    <div class="pwa-update-msg" id="pwa-update-msg">Refresh FitoPro to load the latest fixes and features.</div>
+  </div>
+  <div class="pwa-update-actions">
+    <button class="pwa-update-btn primary" type="button" onclick="applyPwaUpdate()">Refresh</button>
+    <button class="pwa-update-btn" type="button" onclick="dismissPwaUpdate()">Later</button>
+  </div>
+</div>
 
 <!-- ═══════════════════════════════════════════════════════════════
      FITOPRO v3 — FULL APPLICATION WITH SUPABASE BACKEND
