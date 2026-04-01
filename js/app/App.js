@@ -17,6 +17,14 @@ function getAppPageUrl(path) {
   return new URL(path, window.location.href).href;
 }
 
+function getConfirmPageUrl() {
+  return getAppPageUrl('./auth/confirm/');
+}
+
+function getResetPageUrl() {
+  return getAppPageUrl('./auth/reset-password/');
+}
+
 async function saveSession(session) {
   return addSession(session);
 }
@@ -170,7 +178,7 @@ window.handleAuthSubmit = async () => {
         password,
         options: {
           data: { name, display_name: name },
-          emailRedirectTo: getAppPageUrl('./auth/confirm/'),
+          emailRedirectTo: getConfirmPageUrl(),
         },
       });
       if (error) throw error;
@@ -209,7 +217,7 @@ window.handleForgotPassword = async () => {
   try {
     showLoading('Sending reset email...');
     const { error } = await sb.auth.resetPasswordForEmail(email, {
-      redirectTo: getAppPageUrl('./auth/reset-password/'),
+      redirectTo: getResetPageUrl(),
     });
     if (error) throw error;
     hideLoading();
@@ -217,6 +225,36 @@ window.handleForgotPassword = async () => {
   } catch (err) {
     hideLoading();
     showAuthError(getFriendlyAuthError(err, 'login'));
+  }
+};
+
+window.handleResendConfirmation = async () => {
+  const email = document.getElementById('auth-email')?.value.trim() || state.user?.email || '';
+  if (!email) {
+    showAuthError('Enter your email first, then tap Resend confirmation.');
+    return;
+  }
+
+  try {
+    showLoading('Sending confirmation email...');
+    const { error } = await sb.auth.resend({
+      type: 'signup',
+      email,
+      options: {
+        emailRedirectTo: getConfirmPageUrl(),
+      },
+    });
+    if (error) throw error;
+    hideLoading();
+    showToast('📨 Confirmation email sent. Check your inbox.', 'success');
+  } catch (err) {
+    hideLoading();
+    const raw = err?.message?.toLowerCase() || '';
+    if (raw.includes('confirmed')) {
+      showToast('✅ This account is already confirmed.', 'success');
+      return;
+    }
+    showAuthError(getFriendlyAuthError(err, 'register'));
   }
 };
 
@@ -1286,6 +1324,12 @@ function renderProfilePage() {
     $('signed-in-section')&&($('signed-in-section').style.display='block');
     if ($('acct-email-display')) $('acct-email-display').textContent = state.user.email;
     if ($('acct-uid-display')) $('acct-uid-display').textContent = 'ID: '+state.user.id.slice(0,12)+'...';
+    const confirmed = !!state.user.email_confirmed_at;
+    if ($('acct-confirm-status')) {
+      $('acct-confirm-status').textContent = confirmed ? 'Email confirmed' : 'Email not confirmed';
+      $('acct-confirm-status').className = `account-status-chip ${confirmed ? 'ok' : 'warn'}`;
+    }
+    if ($('acct-resend-confirm-btn')) $('acct-resend-confirm-btn').style.display = confirmed ? 'none' : 'inline-flex';
   } else {
     $('sign-in-btn')&&($('sign-in-btn').style.display='block');
     $('signed-in-section')&&($('signed-in-section').style.display='none');
@@ -1339,6 +1383,66 @@ window.toggleSetting = async (key) => {
   persist();
   if (state.user) await saveProfile({ settings: state.profile.settings });
   showToast(state.profile.settings[key] ? `✅ ${key.replace('_',' ')} on` : `🔕 ${key.replace('_',' ')} off`);
+};
+
+window.openChangePasswordModal = () => {
+  if (!state.user) {
+    showToast('🔐 Sign in first to change your password.', 'error');
+    return;
+  }
+  const errorEl = document.getElementById('change-password-error');
+  if (errorEl) {
+    errorEl.style.display = 'none';
+    errorEl.textContent = '';
+  }
+  ['change-password-new', 'change-password-confirm'].forEach((id) => {
+    const input = document.getElementById(id);
+    if (input) input.value = '';
+  });
+  openModal('change-password-modal');
+};
+
+window.submitPasswordChange = async () => {
+  const nextPassword = document.getElementById('change-password-new')?.value || '';
+  const confirmPassword = document.getElementById('change-password-confirm')?.value || '';
+  const errorEl = document.getElementById('change-password-error');
+  const submitBtn = document.getElementById('change-password-submit');
+
+  const showError = (message) => {
+    if (!errorEl) return;
+    errorEl.textContent = '❌ ' + message;
+    errorEl.style.display = 'block';
+  };
+
+  if (!state.user) {
+    showError('Sign in first to change your password.');
+    return;
+  }
+  if (nextPassword.length < 6) {
+    showError('Use a password with at least 6 characters.');
+    return;
+  }
+  if (nextPassword !== confirmPassword) {
+    showError('Your passwords do not match.');
+    return;
+  }
+
+  if (errorEl) errorEl.style.display = 'none';
+  if (submitBtn) submitBtn.disabled = true;
+
+  try {
+    showLoading('Updating password...');
+    const { error } = await sb.auth.updateUser({ password: nextPassword });
+    if (error) throw error;
+    hideLoading();
+    closeModal('change-password-modal');
+    showToast('🔑 Password updated successfully.', 'success');
+  } catch (err) {
+    hideLoading();
+    showError(getFriendlyAuthError(err, 'login'));
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
+  }
 };
 
 // ════════════════════════════════════════

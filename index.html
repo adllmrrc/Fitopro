@@ -73,6 +73,7 @@
     <div class="inp-group"><div class="inp-lbl">Email</div><input class="inp" type="email" id="auth-email" placeholder="you@example.com" autocomplete="email"></div>
     <div class="inp-group"><div class="inp-lbl">Password</div><input class="inp" type="password" id="auth-password" placeholder="At least 6 characters" autocomplete="current-password"></div>
     <div class="auth-inline-action">
+      <button class="auth-text-btn" type="button" onclick="handleResendConfirmation()">Resend confirmation</button>
       <button class="auth-text-btn" type="button" onclick="handleForgotPassword()">Forgot password?</button>
     </div>
     <div id="auth-error" style="color:var(--red);font-size:13px;font-weight:600;margin-bottom:10px;display:none;padding:10px 12px;background:rgba(255,59,92,.1);border-radius:10px;border:1px solid rgba(255,59,92,.25)"></div>
@@ -454,6 +455,25 @@
   </div>
 </div>
 
+<!-- CHANGE PASSWORD MODAL -->
+<div class="overlay" id="change-password-modal">
+  <div class="sheet" style="border-radius:24px;width:min(420px,96%);">
+    <div class="sheet-handle"></div>
+    <div class="auth-header">
+      <div class="auth-mode-label">Security</div>
+      <div class="auth-sheet-title">Change Password</div>
+    </div>
+    <div class="inp-group"><div class="inp-lbl">New Password</div><input class="inp" type="password" id="change-password-new" placeholder="At least 6 characters" autocomplete="new-password"></div>
+    <div class="inp-group"><div class="inp-lbl">Confirm Password</div><input class="inp" type="password" id="change-password-confirm" placeholder="Repeat your new password" autocomplete="new-password"></div>
+    <div id="change-password-error" style="color:var(--red);font-size:13px;font-weight:600;margin-bottom:10px;display:none;padding:10px 12px;background:rgba(255,59,92,.1);border-radius:10px;border:1px solid rgba(255,59,92,.25)"></div>
+    <div style="font-size:12px;color:var(--t3);line-height:1.6;margin-bottom:14px">This updates the password for your signed-in FitoPro account on every device.</div>
+    <div class="auth-actions">
+      <button class="btn-primary" id="change-password-submit" onclick="submitPasswordChange()">Update Password</button>
+      <button class="btn-ghost" onclick="closeModal('change-password-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ STATS ═══ -->
 <div id="page-stats" class="page">
   <div class="sec-title">My Progress</div>
@@ -529,7 +549,12 @@
       <div class="card" style="margin-bottom:10px">
         <div style="font-size:13px;font-weight:700;margin-bottom:4px" id="acct-email-display">Signed in as</div>
         <div style="font-size:12px;color:var(--t3)" id="acct-uid-display"></div>
+        <div class="account-status-row">
+          <span class="account-status-chip" id="acct-confirm-status">Checking confirmation…</span>
+          <button class="auth-text-btn" id="acct-resend-confirm-btn" type="button" onclick="handleResendConfirmation()" style="display:none">Resend confirmation</button>
+        </div>
       </div>
+      <button class="btn-ghost" onclick="openChangePasswordModal()" style="margin-bottom:10px">🔑 Change Password</button>
       <button class="btn-danger" onclick="handleSignOut()">🔓 Sign Out</button>
     </div>
   </div>
